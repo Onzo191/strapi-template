@@ -21,6 +21,10 @@ apps/cms/types/generated/
 # Next.js
 apps/web/next-env.d.ts
 
+# Build-generated, non-deterministic (must not be tracked — busts Turbo cache)
+**/.strapi-updater.json
+**/*.tsbuildinfo
+
 # Env / secrets
 .env
 .env.*

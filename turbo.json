@@ -6,8 +6,22 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "!**/*.test.*", "!**/*.spec.*", "!**/*.md"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**", ".strapi/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!**/*.test.*",
+        "!**/*.spec.*",
+        "!**/*.md",
+        "!**/.strapi-updater.json",
+        "!**/*.tsbuildinfo"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "build/**",
+        ".strapi/**",
+        "types/generated/**"
+      ],
       "env": ["NEXT_PUBLIC_*", "DATABASE_CLIENT", "STRAPI_ADMIN_BACKEND_URL"]
     },
     "typecheck": {

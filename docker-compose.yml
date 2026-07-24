@@ -10,8 +10,10 @@ services:
       POSTGRES_DB: vng
       POSTGRES_USER: vng
       POSTGRES_PASSWORD: vng
+    # Host port 5433 (container stays 5432) to avoid colliding with other
+    # local Postgres stacks. Internal cms↔db traffic uses the compose network.
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
