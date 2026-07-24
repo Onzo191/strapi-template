@@ -1,0 +1,13 @@
+**/node_modules
+**/.next
+**/.strapi
+**/.turbo
+**/dist
+**/build
+**/.cache
+**/.tmp
+**/coverage
+**/.git
+**/*.log
+apps/cms/public/uploads/*
+!apps/cms/public/uploads/.gitkeep

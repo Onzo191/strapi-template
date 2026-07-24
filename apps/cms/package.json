@@ -1,0 +1,35 @@
+{
+  "name": "@vng/cms",
+  "version": "0.0.0",
+  "private": true,
+  "description": "VNG Platform CMS — Strapi 5 (Community). Skeleton only.",
+  "scripts": {
+    "dev": "strapi develop",
+    "develop": "strapi develop",
+    "build": "strapi build",
+    "start": "strapi start",
+    "strapi": "strapi",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@strapi/plugin-cloud": "5.51.0",
+    "@strapi/plugin-users-permissions": "5.51.0",
+    "@strapi/strapi": "5.51.0",
+    "pg": "8.22.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.4",
+    "styled-components": "6.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=24 <=26",
+    "npm": ">=6.0.0"
+  }
+}

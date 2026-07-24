@@ -1,0 +1,16 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm 10 blocks dependency build/postinstall scripts by default.
+# These packages must be allowed to run their install scripts, otherwise
+# their native binaries are never fetched and builds fail at runtime.
+onlyBuiltDependencies:
+  - "@biomejs/biome"
+  - lefthook
+  - esbuild
+  - sharp
+  - "@swc/core"
+  - "@parcel/watcher"
+  - unrs-resolver
+  - core-js

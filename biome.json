@@ -1,0 +1,19 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+  "extends": ["@vng/config-biome"],
+  "files": {
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/build",
+      "!**/.next",
+      "!**/.strapi",
+      "!**/.turbo",
+      "!**/coverage",
+      "!**/node_modules",
+      "!apps/cms/types/generated",
+      "!docs",
+      "!**/*.md"
+    ]
+  }
+}

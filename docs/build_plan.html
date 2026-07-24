@@ -1,0 +1,658 @@
+<title>VNG Website Revamp 2026 — Build Roadmap (IT/Dev)</title>
+<style>
+  :root {
+    --bg: #f5f6f9;
+    --surface: #ffffff;
+    --surface-2: #eef0f5;
+    --ink: #171a21;
+    --ink-2: #3c4250;
+    --muted: #6b7280;
+    --hairline: #e0e3ea;
+    --hairline-strong: #cfd3dd;
+    --accent: #2f56d6;
+    --accent-soft: #e6ecfd;
+    --accent-ink: #1c3aa0;
+    --teal: #0e8f8a;
+    --done: #17915a;
+    --done-soft: #dcf1e6;
+    --wip: #b6791b;
+    --wip-soft: #faf0d7;
+    --todo: #6b7280;
+    --todo-soft: #e9ebf0;
+    --crit: #c0392b;
+    --crit-soft: #fbe6e2;
+    --shadow: 0 1px 2px rgba(20,26,40,.06), 0 4px 16px rgba(20,26,40,.05);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --maxw: 1180px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1017;
+      --surface: #161a24;
+      --surface-2: #1d2330;
+      --ink: #eef1f7;
+      --ink-2: #c3c9d6;
+      --muted: #8a92a3;
+      --hairline: #262c3a;
+      --hairline-strong: #333b4d;
+      --accent: #7d9bff;
+      --accent-soft: #1c2542;
+      --accent-ink: #a9bcff;
+      --teal: #3fd0c9;
+      --done: #4cc98a;
+      --done-soft: #12301f;
+      --wip: #e0ad55;
+      --wip-soft: #2e2611;
+      --todo: #8a92a3;
+      --todo-soft: #212734;
+      --crit: #ef7a6d;
+      --crit-soft: #331a17;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 22px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f6f9; --surface: #ffffff; --surface-2: #eef0f5; --ink: #171a21; --ink-2: #3c4250;
+    --muted: #6b7280; --hairline: #e0e3ea; --hairline-strong: #cfd3dd; --accent: #2f56d6;
+    --accent-soft: #e6ecfd; --accent-ink: #1c3aa0; --teal: #0e8f8a; --done: #17915a; --done-soft: #dcf1e6;
+    --wip: #b6791b; --wip-soft: #faf0d7; --todo: #6b7280; --todo-soft: #e9ebf0; --crit: #c0392b; --crit-soft: #fbe6e2;
+    --shadow: 0 1px 2px rgba(20,26,40,.06), 0 4px 16px rgba(20,26,40,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1017; --surface: #161a24; --surface-2: #1d2330; --ink: #eef1f7; --ink-2: #c3c9d6;
+    --muted: #8a92a3; --hairline: #262c3a; --hairline-strong: #333b4d; --accent: #7d9bff;
+    --accent-soft: #1c2542; --accent-ink: #a9bcff; --teal: #3fd0c9; --done: #4cc98a; --done-soft: #12301f;
+    --wip: #e0ad55; --wip-soft: #2e2611; --todo: #8a92a3; --todo-soft: #212734; --crit: #ef7a6d; --crit-soft: #331a17;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 22px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); line-height: 1.55;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+  h1, h2, h3 { text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- Header ---------- */
+  header.hero {
+    border-bottom: 1px solid var(--hairline);
+    background:
+      radial-gradient(120% 140% at 88% -20%, var(--accent-soft) 0%, transparent 46%),
+      var(--surface);
+  }
+  .hero-inner { padding: 44px 0 34px; display: flex; flex-direction: column; gap: 20px; }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .hero h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 720; line-height: 1.08; }
+  .hero .lede { color: var(--ink-2); font-size: clamp(15px, 1.6vw, 17px); max-width: 60ch; margin-top: 10px; }
+  .hero .brandmark {
+    font-family: var(--mono); font-weight: 700; font-size: 13px; letter-spacing: .04em;
+    border: 1px solid var(--hairline-strong); border-radius: 8px; padding: 7px 12px;
+    color: var(--ink); white-space: nowrap; background: var(--surface);
+  }
+  .brandmark b { color: var(--accent); }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--surface-2); border: 1px solid var(--hairline);
+    border-radius: 999px; padding: 5px 12px; font-size: 12.5px; color: var(--ink-2);
+  }
+  .chip b { color: var(--ink); font-weight: 640; }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  /* theme toggle */
+  .toggle {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    background: var(--surface); border: 1px solid var(--hairline-strong); color: var(--muted);
+    border-radius: 7px; padding: 6px 10px; cursor: pointer;
+  }
+  .toggle:hover { color: var(--ink); border-color: var(--accent); }
+
+  /* ---------- KPI strip ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin: 26px 0 4px; }
+  .kpi { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 16px 16px 14px; box-shadow: var(--shadow); }
+  .kpi .n { font-family: var(--mono); font-size: 27px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .kpi .n small { font-size: 14px; color: var(--muted); font-weight: 600; }
+  .kpi .l { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .kpi.accent .n { color: var(--accent); }
+
+  /* ---------- Section scaffolding ---------- */
+  section { padding: 40px 0; border-top: 1px solid var(--hairline); }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+  .sec-head h2 { font-size: clamp(19px, 2.4vw, 24px); font-weight: 680; }
+  .sec-head .num { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 700; }
+  .sec-head p { color: var(--muted); font-size: 13.5px; margin: 0; flex-basis: 100%; max-width: 72ch; }
+
+  /* ---------- Timeline ---------- */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.08); }
+  .sw-done { background: var(--done); } .sw-wip { background: var(--wip); } .sw-todo { background: var(--todo); } .sw-crit { background: var(--crit); }
+
+  .gantt { display: flex; flex-direction: column; gap: 9px; overflow-x: auto; padding-bottom: 6px; }
+  .gantt-scale { display: grid; grid-template-columns: repeat(8, 1fr); min-width: 720px; font-family: var(--mono); font-size: 10.5px; color: var(--muted); border-bottom: 1px dashed var(--hairline-strong); padding-bottom: 5px; }
+  .gantt-scale span { text-align: center; }
+  .track { display: grid; grid-template-columns: 190px 1fr; gap: 12px; align-items: center; min-width: 720px; }
+  .track .name { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+  .bar-area { position: relative; height: 26px; background: var(--surface-2); border-radius: 6px; }
+  .bar { position: absolute; top: 3px; height: 20px; border-radius: 5px; display: flex; align-items: center; padding: 0 9px; font-size: 10.5px; font-weight: 650; color: #fff; white-space: nowrap; overflow: hidden; }
+  .bar.b-done { background: var(--done); } .bar.b-wip { background: var(--wip); } .bar.b-todo { background: linear-gradient(90deg, var(--accent), var(--teal)); } .bar.b-crit { background: var(--crit); }
+
+  /* ---------- Phase blocks ---------- */
+  .phase { background: var(--surface); border: 1px solid var(--hairline); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden; }
+  .phase-head { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--hairline); background: linear-gradient(90deg, var(--accent-soft), transparent 60%); }
+  .phase-tag { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #fff; background: var(--accent); border-radius: 6px; padding: 4px 9px; }
+  .phase-head h3 { font-size: 16.5px; font-weight: 680; }
+  .phase-head .when { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 6px; padding: 4px 10px; white-space: nowrap; }
+  .phase-body { padding: 18px 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .ws { border: 1px solid var(--hairline); border-radius: 10px; padding: 13px 14px; background: var(--surface); }
+  .ws h4 { font-size: 13px; font-weight: 680; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .ws h4 .k { font-family: var(--mono); font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+  .ws ul { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .ws li { font-size: 12.8px; color: var(--ink-2); padding-left: 16px; position: relative; line-height: 1.45; }
+  .ws li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
+  .ws li .ac { display: block; color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+  .tag-status { font-family: var(--mono); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 5px; vertical-align: middle; }
+  .st-done { color: var(--done); background: var(--done-soft); }
+  .st-wip { color: var(--wip); background: var(--wip-soft); }
+  .st-todo { color: var(--todo); background: var(--todo-soft); }
+
+  /* ---------- Tables ---------- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--hairline); border-radius: 12px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 12.8px; background: var(--surface); }
+  thead th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 12px 14px; border-bottom: 1px solid var(--hairline-strong); background: var(--surface-2); position: sticky; top: 0; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--hairline); color: var(--ink-2); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--accent-soft); }
+  td .mname { font-weight: 660; color: var(--ink); display: block; }
+  .pill { font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 3px 8px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+  .p-must { color: var(--crit); background: var(--crit-soft); }
+  .p-should { color: var(--wip); background: var(--wip-soft); }
+  .p-future { color: var(--accent); background: var(--accent-soft); }
+  .gap-none { color: var(--done); font-weight: 640; }
+  .gap-part { color: var(--wip); font-weight: 640; }
+  .gap-miss { color: var(--crit); font-weight: 640; }
+
+  /* ---------- Two-col info ---------- */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .card h4 { font-size: 14px; font-weight: 680; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .card li { font-size: 12.8px; color: var(--ink-2); }
+  .card li b { color: var(--ink); font-weight: 640; }
+  .risk { border-left: 3px solid var(--crit); }
+  .risk h4 { color: var(--crit); }
+
+  .stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+  .stack { background: var(--surface); border: 1px solid var(--hairline); border-radius: 10px; padding: 13px 14px; box-shadow: var(--shadow); }
+  .stack .cat { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .stack .val { font-size: 13.5px; font-weight: 640; color: var(--ink); margin-top: 3px; }
+  .stack .note { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+  footer { padding: 30px 0 50px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--hairline); }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  @media (max-width: 720px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .cols { grid-template-columns: 1fr; }
+    .hero-inner { padding: 32px 0 26px; }
+  }
+</style>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">Kế hoạch Xây dựng · Góc nhìn IT / Dev</div>
+        <h1>VNG Website Revamp 2026<br>Build Roadmap</h1>
+        <p class="lede">Toàn bộ hạng mục kỹ thuật cần <b>xây dựng</b> để đưa <code>vng.com.vn</code> thành nền tảng truyền thông doanh nghiệp: IR Page Phase 2, nền tảng CMS tự chủ, revamp frontend theo sitemap mới, SEO/AIO và hệ thống tracking.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+        <div class="brandmark"><b>VNG</b> · Digital ecosystem · AI era</div>
+        <button class="toggle" id="themeBtn" aria-label="Đổi giao diện sáng/tối">◑ Theme</button>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span class="chip"><span class="dot"></span>Owner: <b>Corporate Communications (CBC)</b></span>
+      <span class="chip"><span class="dot"></span>IT Lead: <b>Anh Tú / Anh Đồng</b></span>
+      <span class="chip"><span class="dot"></span>Design: <b>BIE</b></span>
+      <span class="chip"><span class="dot"></span>Go-live mục tiêu: <b>20/09/2026</b></span>
+      <span class="chip"><span class="dot"></span>Cập nhật: <b>24/07/2026</b></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="kpis">
+      <div class="kpi accent"><div class="n">8</div><div class="l">Phase xây dựng</div></div>
+      <div class="kpi"><div class="n">16</div><div class="l">Module CMS phải build</div></div>
+      <div class="kpi"><div class="n">22</div><div class="l">Trang / section frontend</div></div>
+      <div class="kpi"><div class="n">15</div><div class="l">Hạng mục SEO/AIO</div></div>
+      <div class="kpi"><div class="n">297</div><div class="l">URL 404 cần redirect 301</div></div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">01</span><h2>Lộ trình tổng thể</h2>
+        <p>Timeline hợp nhất từ 3 tài liệu nguồn. Mốc go-live chốt theo kế hoạch chi tiết (<code>web-tracking</code>) là 20/09 — thực tế hơn mốc 10/08 trong <code>web-mng</code> vì phụ thuộc Figma approved 15/07.</p>
+      </div>
+      <div class="legend">
+        <span><i class="swatch sw-done"></i>Hoàn thành</span>
+        <span><i class="swatch sw-wip"></i>Đang làm</span>
+        <span><i class="swatch sw-todo"></i>Chưa làm / sắp tới</span>
+        <span><i class="swatch sw-crit"></i>Mốc rủi ro</span>
+      </div>
+      <div class="gantt">
+        <div class="gantt-scale">
+          <span>T6</span><span>T7</span><span>T8</span><span>T9</span><span>T10</span><span>T11</span><span>T12</span><span>2027</span>
+        </div>
+        <div class="track"><span class="name">P0 · Bàn giao & Centralize</span><div class="bar-area"><div class="bar b-wip" style="left:0%; width:14%;">15–30/06</div></div></div>
+        <div class="track"><span class="name">P1 · IR Page Phase 2</span><div class="bar-area"><div class="bar b-wip" style="left:6%; width:22%;">25/06 – 31/07</div></div></div>
+        <div class="track"><span class="name">Figma UX/UI (BIE)</span><div class="bar-area"><div class="bar b-todo" style="left:12.5%; width:13%;">01–15/07</div></div></div>
+        <div class="track"><span class="name">P2 · CMS Platform build</span><div class="bar-area"><div class="bar b-todo" style="left:25%; width:34%;">31/07 – 20/09</div></div></div>
+        <div class="track"><span class="name">P3 · Frontend revamp</span><div class="bar-area"><div class="bar b-todo" style="left:25%; width:34%;">31/07 – 20/09</div></div></div>
+        <div class="track"><span class="name">P4 · SEO/AIO</span><div class="bar-area"><div class="bar b-todo" style="left:37.5%; width:21%;">Build → UAT</div></div></div>
+        <div class="track"><span class="name">P5 · Security & UAT</span><div class="bar-area"><div class="bar b-crit" style="left:50%; width:13%;">25/08 – 20/09</div></div></div>
+        <div class="track"><span class="name">P6 · Tracking</span><div class="bar-area"><div class="bar b-todo" style="left:62.5%; width:12.5%;">20–30/09</div></div></div>
+        <div class="track"><span class="name">P7 · Optimize & Microsite</span><div class="bar-area"><div class="bar b-todo" style="left:75%; width:25%;">Sau 21/09 → xuyên suốt</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASES -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">02</span><h2>Chi tiết hạng mục phải xây dựng theo Phase</h2>
+        <p>Mỗi phase gom theo workstream. Dòng in nhạt là tiêu chí nghiệm thu (acceptance) cần đạt.</p>
+      </div>
+
+      <!-- P0 -->
+      <div class="phase">
+        <div class="phase-head"><span class="phase-tag">P0</span><h3>Nền tảng & Bàn giao — Centralize về IT</h3><span class="when">15 – 30/06/2026</span></div>
+        <div class="phase-body">
+          <div class="ws">
+            <h4><span class="k">Handover</span>Tiếp nhận source & hạ tầng</h4>
+            <ul>
+              <li>Nhận source code website từ VNGGames, IR page từ A4B <span class="ac">Kèm tài liệu kiến trúc, credential, quyền repo/hosting</span></li>
+              <li>Centralize hosting về đầu mối IT <span class="tag-status st-wip">Đang làm</span></li>
+              <li>Kiểm kê stack hiện tại, vẽ lại kiến trúc hệ thống</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">DevOps</span>Môi trường & CI/CD</h4>
+            <ul>
+              <li>Dựng 3 môi trường: Dev / Staging / Production <span class="ac">Staging phải mirror production trước khi go-live</span></li>
+              <li>Pipeline CI/CD, quản lý secret, backup DB + media định kỳ</li>
+              <li>Monitoring lỗi publish / API / media</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Baseline</span>Audit & khoá scope</h4>
+            <ul>
+              <li>Crawl toàn site: lập danh sách 297 URL 404, tình trạng noindex/canonical</li>
+              <li>Quyết định domain chính www vs non-www <span class="ac">Đầu vào cho redirect 301 ở P4</span></li>
+              <li>Lock scope IR: Stock, Disclosures, GMS + hành vi CMS</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- P1 -->
+      <div class="phase">
+        <div class="phase-head"><span class="phase-tag">P1</span><h3>IR Page Phase 2 — Stock &amp; Disclosure</h3><span class="when">25/06 – 31/07/2026</span></div>
+        <div class="phase-body">
+          <div class="ws">
+            <h4><span class="k">Dev</span>Trang Cổ phiếu (Stock)</h4>
+            <ul>
+              <li>Tích hợp API Vietstock lấy dữ liệu cổ phiếu real-time <span class="ac">Có cache + fallback khi API lỗi; không vỡ trang</span></li>
+              <li>Build UI theo Figma sẵn có; update text</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Dev</span>Trang Công bố thông tin</h4>
+            <ul>
+              <li>Build trang Disclosure từ Figma</li>
+              <li>Bổ sung CMS module upload tài liệu cho Disclosure <span class="ac">Phân loại, thay file giữ URL, phân quyền</span></li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Ops</span>Vận hành & đo lường</h4>
+            <ul>
+              <li>Viết tài liệu vận hành IR page (CMS, quy trình)</li>
+              <li>Cài tracking cơ bản cho IR: view, click, download, outbound</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- P2 -->
+      <div class="phase">
+        <div class="phase-head"><span class="phase-tag">P2</span><h3>Nền tảng CMS — trọng tâm dự án (Admin Autonomy)</h3><span class="when">31/07 – 20/09/2026</span></div>
+        <div class="phase-body">
+          <div class="ws">
+            <h4><span class="k">Core</span>Nội dung & Xuất bản</h4>
+            <ul>
+              <li>WYSIWYG / block builder + autosave + preview sát bản publish</li>
+              <li>Workflow trạng thái Draft → Review → Approved → Published → Archived</li>
+              <li>Version history + so sánh + rollback không mất lịch sử</li>
+              <li>Schedule publish/unpublish; cảnh báo rời trang chưa lưu</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Assets</span>Media & Banner</h4>
+            <ul>
+              <li>Media library tập trung: folder/tag, thay file giữ URL, alt/caption</li>
+              <li>Tối ưu ảnh (WebP), validate MIME, scan malware, chặn file thực thi</li>
+              <li>Quản lý banner desktop/mobile: CTA, thứ tự, lịch, tự ẩn khi hết hạn</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Governance</span>Phân quyền & Audit</h4>
+            <ul>
+              <li>RBAC 5 vai trò: Master Admin, Admin, Editor, Contributor, Viewer <span class="ac">Least privilege, session timeout, kiến trúc sẵn multi-site 2027</span></li>
+              <li>Workflow duyệt: separation of duties, comment, thông báo</li>
+              <li>System log bất biến + filter + export; soft delete / trash</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Discoverability</span>SEO, Menu, Đa ngữ</h4>
+            <ul>
+              <li>Trường SEO per-page: title, meta, slug, OG, canonical, schema</li>
+              <li>Auto sitemap.xml khi publish + trình quản lý redirect 301</li>
+              <li>Quản lý menu header/footer kéo-thả đa cấp, cảnh báo link gãy</li>
+              <li>Song ngữ VI/EN độc lập + liên kết bản dịch + fallback</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Platform</span>API, Bảo mật & Vận hành</h4>
+            <ul>
+              <li>API có auth + rate limit cho frontend tiêu thụ dữ liệu</li>
+              <li>SSO/MFA, chống XSS/CSRF/Injection, khoá tài khoản khi login sai</li>
+              <li>Webhook clear cache/trigger build; tích hợp CDN, GA4/GTM, email</li>
+              <li>Tách rời: CMS lỗi không làm sập website public</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">UX Admin</span>Dashboard & Form</h4>
+            <ul>
+              <li>Dashboard theo đầu việc: chờ duyệt / sắp publish / vừa cập nhật</li>
+              <li>Search / filter / bulk actions cho người không chuyên kỹ thuật</li>
+              <li>Form builder (Contact/Newsletter/IR): consent, CAPTCHA, export <span class="tag-status st-todo">Conditional</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- P3 -->
+      <div class="phase">
+        <div class="phase-head"><span class="phase-tag">P3</span><h3>Revamp Frontend theo Sitemap mới</h3><span class="when">31/07 – 20/09/2026</span></div>
+        <div class="phase-body">
+          <div class="ws">
+            <h4><span class="k">Foundation</span>Design system</h4>
+            <ul>
+              <li>Component library từ Figma (BIE approved 15/07)</li>
+              <li>Responsive Web + Mobile; tối ưu tái sử dụng section</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Nâng cấp mới</span>Trang chủ &amp; Về VNG</h4>
+            <ul>
+              <li>Homepage: banner động, auto-pull 3 tin mới nhất, hệ sinh thái 4 BU, tác động, Career, Contact</li>
+              <li>Về VNG: Tầm nhìn-Sứ mệnh, Lịch sử (timeline), Lãnh đạo (grid), Văn hoá, Giải thưởng</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Nâng cấp mới</span>Tác động &amp; Tin tức</h4>
+            <ul>
+              <li>Tác động: Đóng góp kinh tế, Nhân lực số, Hạ tầng số (key numbers admin sửa được)</li>
+              <li>Tin tức: Doanh nghiệp, Thông cáo báo chí, Kết nối VNG (photo recap)</li>
+              <li>Kết quả kinh doanh: <b>auto-pull từ IR</b>, tránh trùng nội dung</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Embed / Link</span>Trụ cột KD, Con người, IR, Cộng đồng</h4>
+            <ul>
+              <li>Trụ cột KD: nhúng/link BU (Zalo, ZaloPay, VNGGames, GreenNode, AI-Native) — không code lại BU</li>
+              <li>Con người: Tuyển dụng nhúng link Career site</li>
+              <li>Nhà đầu tư: nhúng IR hiện tại, giữ URL nếu được</li>
+              <li>Cam kết cộng đồng: nhúng/link DMF + landing UpRace</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- P4 -->
+      <div class="phase">
+        <div class="phase-head"><span class="phase-tag">P4</span><h3>SEO kỹ thuật &amp; AIO Readiness</h3><span class="when">Build → UAT</span></div>
+        <div class="phase-body">
+          <div class="ws">
+            <h4><span class="k">Foundation</span>Dọn nền SEO</h4>
+            <ul>
+              <li>Gỡ x-robots-tag: noindex sai; chuẩn hoá robots.txt</li>
+              <li>Redirect 301 chuẩn hoá www/non-www</li>
+              <li>Map 297 URL 404 → trang đích mới</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Build</span>Structured data (JSON-LD)</h4>
+            <ul>
+              <li>Organization schema (homepage) + Breadcrumb động theo URL</li>
+              <li>FAQPage, NewsArticle/Report, Person (leadership) schema</li>
+              <li>Hreflang + lang=vi/en cho từng bản dịch</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">AIO</span>Cấu trúc cho AI/LLM</h4>
+            <ul>
+              <li>Topic cluster routing (hub/node) thay cấu trúc phòng ban cũ</li>
+              <li>XML sitemap tự sinh, chỉ chứa canonical hợp lệ</li>
+              <li>Nội dung facts dạng máy đọc được cho trang Tác động</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- P5 P6 -->
+      <div class="phase">
+        <div class="phase-head"><span class="phase-tag">P5·P6</span><h3>Security · UAT · Tracking · Launch</h3><span class="when">25/08 – 30/09/2026</span></div>
+        <div class="phase-body">
+          <div class="ws">
+            <h4><span class="k">Security</span>Kiểm tra an ninh (VRC)</h4>
+            <ul>
+              <li>Pentest XSS/CSRF/Injection; bảo vệ form; ma trận quyền admin <span class="ac">Security pass bắt buộc trước launch</span></li>
+              <li>Kiểm tra backup/rollback hoạt động</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Performance</span>Core Web Vitals</h4>
+            <ul>
+              <li>Nén ảnh WebP, defer script, cache/CDN <span class="ac">LCP &lt; 2.5s · INP &lt; 200ms</span></li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Tracking</span>Hệ thống đo lường</h4>
+            <ul>
+              <li>Events: page_view, section_view, CTA, outbound_click theo BU, download, form submit, search, language switch</li>
+              <li>GA4/GTM + validate event fire đúng trong test</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Launch</span>UAT &amp; vận hành</h4>
+            <ul>
+              <li>UAT với CBC; soft launch giới hạn</li>
+              <li>Tài liệu vận hành website (Dev + Quản trị) để đào tạo</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- P7 -->
+      <div class="phase">
+        <div class="phase-head"><span class="phase-tag">P7</span><h3>Tối ưu &amp; Mở rộng (sau launch)</h3><span class="when">Sau 21/09 → xuyên suốt</span></div>
+        <div class="phase-body">
+          <div class="ws">
+            <h4><span class="k">Operate</span>Bảo trì & tối ưu</h4>
+            <ul>
+              <li>Vận hành, monitoring, bảo trì định kỳ</li>
+              <li>Tối ưu SEO/AIO & tracking theo dữ liệu thực</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Scale</span>Microsite framework</h4>
+            <ul>
+              <li>Khung microsite/landing theo campaign truyền thông</li>
+            </ul>
+          </div>
+          <div class="ws">
+            <h4><span class="k">Future</span>Multi-site 2027</h4>
+            <ul>
+              <li>Kích hoạt kiến trúc multi-site (revamp DMF 2027) trên nền CMS đã build sẵn linh hoạt</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CMS MATRIX -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">03</span><h2>Ma trận Module CMS — What to build &amp; Gap</h2>
+        <p>16 module cần xây dựng, đối chiếu độ ưu tiên với trạng thái CMS hiện tại. Đa số là <b>thiếu hụt lớn (Chưa có)</b> — đây là khối lượng dev chính của dự án.</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Module</th><th>Cần build (tóm tắt)</th><th>Priority</th><th>Hiện trạng → Gap</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mname">Quản lý nội dung</span></td><td>WYSIWYG/block builder, autosave, preview, schedule, trạng thái Draft→Archived</td><td><span class="pill p-must">Must</span></td><td><span class="gap-part">Có cơ bản</span> · thiếu WYSIWYG & workflow</td></tr>
+            <tr><td><span class="mname">Quản lý banner</span></td><td>Banner desktop/mobile, CTA, lịch, auto-hide, preview</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">Media &amp; tài liệu</span></td><td>Library tập trung, folder/tag, thay file giữ URL, nén ảnh, scan virus</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span> — thiếu hụt lớn</td></tr>
+            <tr><td><span class="mname">Workflow xuất bản</span></td><td>Contributor→Editor→Approver→Publisher, comment, separation of duties</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">Version &amp; rollback</span></td><td>Version history, so sánh, khôi phục, ghi user/thời gian/lý do</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">User &amp; phân quyền (RBAC)</span></td><td>5 vai trò, quyền theo module/chuyên mục/hành động, multi-site ready</td><td><span class="pill p-must">Must</span> <span class="pill p-future">Future</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">Audit &amp; compliance</span></td><td>System log bất biến, filter, export, soft delete/trash</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">SEO &amp; marketing</span></td><td>Trường SEO, OG, canonical, schema, auto sitemap.xml, redirect 301, GA4/GTM</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">Đa ngôn ngữ VI/EN</span></td><td>Nội dung/slug/SEO riêng mỗi ngôn ngữ, liên kết bản dịch, fallback</td><td><span class="pill p-must">Must</span></td><td><span class="gap-none">Đã có</span></td></tr>
+            <tr><td><span class="mname">Menu &amp; navigation</span></td><td>Header/footer đa cấp kéo-thả, cảnh báo link gãy, preview</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">Form &amp; dữ liệu người dùng</span></td><td>Form builder, submission, export, consent, CAPTCHA</td><td><span class="pill p-should">Conditional</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">Bảo mật đăng nhập &amp; API</span></td><td>SSO/MFA, session timeout, rate limit, chống XSS/CSRF/injection</td><td><span class="pill p-must">Must</span></td><td><span class="gap-part">Cần check lại</span></td></tr>
+            <tr><td><span class="mname">Hiệu năng &amp; delivery</span></td><td>Search/filter/pagination, media đúng kích thước, cache/CDN, tách rời public site</td><td><span class="pill p-must">Must</span></td><td><span class="gap-part">Có, chưa tối ưu</span></td></tr>
+            <tr><td><span class="mname">Backup &amp; vận hành</span></td><td>Staging/prod, backup DB+media, restore theo thời điểm, monitoring, rollback plan</td><td><span class="pill p-must">Must</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+            <tr><td><span class="mname">Usability dashboard</span></td><td>Dashboard theo đầu việc, bulk actions, cảnh báo chưa lưu, preview desktop/mobile</td><td><span class="pill p-should">Should</span></td><td><span class="gap-part">Mới có dashboard chung</span></td></tr>
+            <tr><td><span class="mname">Integration</span></td><td>API frontend, CDN/media storage, GA4/GTM, email, internal search, webhook clear cache</td><td><span class="pill p-must">Must</span> <span class="pill p-should">Should</span></td><td><span class="gap-miss">Chưa có</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEO TABLE -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">04</span><h2>Checklist SEO / AIO cho Dev</h2>
+        <p>15 hạng mục kỹ thuật, chia theo phase mục tiêu. Hầu hết trạng thái hiện tại là <em>Not started</em> — cần dependency nội dung/URL từ CC/BIE.</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Hạng mục</th><th>Dev cần làm</th><th>Nghiệm thu</th><th>Phase</th></tr></thead>
+          <tbody>
+            <tr><td><span class="mname">Noindex / indexation</span></td><td>Gỡ noindex sai, chuẩn hoá robots.txt, meta robots, canonical</td><td>Trang quan trọng không bị block</td><td><span class="pill p-future">Foundation</span></td></tr>
+            <tr><td><span class="mname">Domain canonical</span></td><td>301 chuẩn hoá www/non-www</td><td>Chỉ còn 1 canonical domain</td><td><span class="pill p-future">Foundation</span></td></tr>
+            <tr><td><span class="mname">404 cleanup</span></td><td>Map 297 URL 404 → đích mới</td><td>Không còn 404 quan trọng</td><td><span class="pill p-future">Foundation</span></td></tr>
+            <tr><td><span class="mname">Hreflang / lang</span></td><td>Gắn lang=vi/en + hreflang theo bản dịch</td><td>Không loạn ngôn ngữ trên search/AI</td><td><span class="pill p-must">Build</span></td></tr>
+            <tr><td><span class="mname">Organization Schema</span></td><td>JSON-LD Organization trên homepage (ticker VNZ, logo, social)</td><td>Schema validator pass</td><td><span class="pill p-must">Build</span></td></tr>
+            <tr><td><span class="mname">Breadcrumb Schema</span></td><td>BreadcrumbList động theo URL path</td><td>Breadcrumb đúng hierarchy mọi trang</td><td><span class="pill p-must">Build</span></td></tr>
+            <tr><td><span class="mname">FAQ Schema</span></td><td>FAQ accordion → FAQPage JSON-LD</td><td>Rich result pass, khớp UI</td><td><span class="pill p-must">Build</span></td></tr>
+            <tr><td><span class="mname">NewsArticle / Report</span></td><td>headline, datePublished, author, publisher trên tin/báo cáo</td><td>Đạt chuẩn Google News</td><td><span class="pill p-must">Build</span></td></tr>
+            <tr><td><span class="mname">Person Schema</span></td><td>Template động cho profile Leadership</td><td>Person schema pass</td><td><span class="pill p-must">Build</span></td></tr>
+            <tr><td><span class="mname">Topic Cluster Routing</span></td><td>Routes hub/node thay cấu trúc phòng ban</td><td>URL rõ hierarchy + internal links</td><td><span class="pill p-must">Build</span></td></tr>
+            <tr><td><span class="mname">XML Sitemap</span></td><td>Tự sinh sau publish, chỉ canonical hợp lệ</td><td>Submit-ready</td><td><span class="pill p-should">Build/UAT</span></td></tr>
+            <tr><td><span class="mname">Tracking</span></td><td>Event CTA, download, form, search, language switch</td><td>Events fire đúng trong test</td><td><span class="pill p-should">Build/UAT</span></td></tr>
+            <tr><td><span class="mname">Performance</span></td><td>Core Web Vitals, image, script, caching</td><td>Đạt baseline thống nhất</td><td><span class="pill p-should">UAT</span></td></tr>
+            <tr><td><span class="mname">Security</span></td><td>Security check, form protection, admin permission, backup</td><td>Security pass trước launch</td><td><span class="pill p-must">UAT/Launch</span></td></tr>
+            <tr><td><span class="mname">Auto news / IR embed / BU / Impact / Career</span></td><td>Homepage auto-pull 3 tin; nhúng IR, BU, DMF/UpRace, Career; outbound tracking</td><td>Hiển thị đúng, track đúng đích</td><td><span class="pill p-should">Build/UAT</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH + RISKS -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">05</span><h2>Khuyến nghị kiến trúc &amp; Rủi ro cần quản</h2>
+        <p>Gợi ý hướng kỹ thuật (điều chỉnh theo stack bàn giao thực tế) và các mâu thuẫn timeline cần xử lý sớm.</p>
+      </div>
+
+      <div class="stack-grid" style="margin-bottom:18px;">
+        <div class="stack"><div class="cat">Kiến trúc</div><div class="val">Headless / decoupled CMS</div><div class="note">API-first để CMS lỗi không sập site public; sẵn multi-site 2027</div></div>
+        <div class="stack"><div class="cat">Frontend</div><div class="val">SSR / SSG framework</div><div class="note">Tốt cho SEO + Core Web Vitals; render schema JSON-LD server-side</div></div>
+        <div class="stack"><div class="cat">Editor</div><div class="val">Block builder + WYSIWYG</div><div class="note">CKEditor/TinyMCE hoặc block-based; autosave</div></div>
+        <div class="stack"><div class="cat">Auth</div><div class="val">SSO VNG + MFA</div><div class="note">RBAC, session timeout, rate limit API</div></div>
+        <div class="stack"><div class="cat">Media</div><div class="val">Object storage + CDN</div><div class="note">Auto WebP, giữ URL khi thay file, virus scan</div></div>
+        <div class="stack"><div class="cat">Data</div><div class="val">Versioned content model</div><div class="note">Audit trail bất biến, soft delete, i18n VI/EN</div></div>
+        <div class="stack"><div class="cat">Analytics</div><div class="val">GA4 + GTM</div><div class="note">Data layer chuẩn hoá cho event tracking</div></div>
+        <div class="stack"><div class="cat">Integrations</div><div class="val">Vietstock API · Webhook</div><div class="note">Cache + fallback; webhook clear cache khi publish</div></div>
+      </div>
+
+      <div class="cols">
+        <div class="card risk">
+          <h4>⚠ Rủi ro &amp; mâu thuẫn timeline</h4>
+          <ul>
+            <li><b>Mốc Dev lệch:</b> <code>web-mng</code> đòi xong Dev 10/08 nhưng <code>web-tracking</code> kéo đến 20/09. Chốt theo <b>20/09</b> vì phụ thuộc Figma 15/07.</li>
+            <li><b>Security 25/08 bất khả thi</b> nếu code kéo đến 20/09 → chuyển sang <b>kiểm thử song song 25/08–10/09</b> hoặc ngay sau code.</li>
+            <li><b>Figma là đường găng:</b> Dev frontend không thể bắt đúng hạn nếu Figma chưa approved 15/07.</li>
+            <li><b>Auto-pull IR → Tin tức:</b> phụ thuộc IR Phase 2 xong trước; cần tránh trùng nội dung.</li>
+            <li><b>Dependency nội dung/URL từ CC/BIE</b> chặn hầu hết hạng mục SEO/AIO.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>✓ Nguyên tắc ưu tiên khi build</h4>
+          <ul>
+            <li><b>Foundation trước:</b> môi trường, CI/CD, redirect/canonical, robots — làm sớm để không cản launch.</li>
+            <li><b>CMS là xương sống:</b> ưu tiên các module Must-have còn "Chưa có" (media, workflow, version, RBAC, audit, SEO, menu).</li>
+            <li><b>Embed ≠ rebuild:</b> BU, Career, IR, DMF/UpRace chỉ nhúng/link — tiết kiệm effort lớn.</li>
+            <li><b>Tách rời public/CMS</b> để giảm rủi ro vận hành.</li>
+            <li><b>Kiến trúc linh hoạt multi-site</b> ngay từ đầu, tránh làm lại nền năm 2027.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>VNG Website Revamp 2026 · Build Roadmap (góc nhìn IT/Dev) · Tổng hợp từ web-mng, web-tracking, website-req</span>
+    <span>Không phải cam kết hợp đồng — dùng để lập kế hoạch nội bộ</span>
+  </div>
+</footer>
+
+<script>
+  (() => {
+    var btn = document.getElementById('themeBtn');
+    var root = document.documentElement;
+    btn.addEventListener('click', () => {
+      var cur = root.getAttribute('data-theme');
+      var isDark = cur ? cur === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    });
+  })();
+</script>

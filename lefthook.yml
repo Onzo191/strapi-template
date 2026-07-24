@@ -1,0 +1,18 @@
+# Git hooks managed by Lefthook.
+# pre-commit  -> Biome (lint + format check) + TypeScript typecheck
+# commit-msg  -> Conventional Commits enforcement via commitlint
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      glob: "*.{js,jsx,ts,tsx,json,jsonc,css}"
+      run: pnpm biome check --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+    - name: typecheck
+      glob: "*.{ts,tsx}"
+      run: pnpm turbo run typecheck
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm commitlint --edit {1}

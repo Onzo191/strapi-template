@@ -1,0 +1,38 @@
+{
+  "name": "vng-platform",
+  "version": "0.0.0",
+  "private": true,
+  "description": "VNG Platform monorepo — Strapi 5 (CMS) + Next.js 16 (web). Skeleton only.",
+  "packageManager": "pnpm@10.34.4",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.5",
+    "@commitlint/cli": "21.2.1",
+    "@commitlint/config-conventional": "21.2.0",
+    "@commitlint/types": "21.2.0",
+    "@vng/config-biome": "workspace:*",
+    "@vng/config-tsconfig": "workspace:*",
+    "lefthook": "2.1.10",
+    "turbo": "2.10.6",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.17",
+      "@types/react-dom": "19.2.3"
+    }
+  }
+}

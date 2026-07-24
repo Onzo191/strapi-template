@@ -1,0 +1,9 @@
+{
+  "extends": "@vng/config-tsconfig/react-library.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}

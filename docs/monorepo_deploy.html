@@ -1,0 +1,460 @@
+<title>Monorepo Deployment — Chiến lược & Độ linh hoạt (VNG Web)</title>
+<style>
+  :root {
+    --bg: #f4f6fa; --surface: #ffffff; --surface-2: #eceff5; --surface-3: #e3e7f0;
+    --ink: #141824; --ink-2: #3a4257; --muted: #6a7286; --hairline: #dfe3ec; --hairline-strong: #cbd1de;
+    --accent: #2f56d6; --accent-soft: #e6ecfd; --accent-ink: #1c3aa0;
+    --teal: #0d8f89; --teal-soft: #dcf3f1;
+    --good: #17915a; --good-soft: #dcf1e6; --warn: #b6791b; --warn-soft: #faf0d7;
+    --bad: #c0392b; --bad-soft: #fbe6e2; --neutral: #6a7286; --neutral-soft: #e9ebf0;
+    --shadow: 0 1px 2px rgba(20,26,40,.05), 0 6px 20px rgba(20,26,40,.06);
+    --shadow-lg: 0 2px 6px rgba(20,26,40,.08), 0 18px 44px rgba(20,26,40,.10);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --maxw: 1220px; --r: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0e15; --surface: #141824; --surface-2: #1b2130; --surface-3: #232a3b;
+      --ink: #eef1f7; --ink-2: #c1c8d6; --muted: #868ea1; --hairline: #232a38; --hairline-strong: #323b4e;
+      --accent: #7d9bff; --accent-soft: #1a2340; --accent-ink: #adbfff;
+      --teal: #3fd0c9; --teal-soft: #10302e;
+      --good: #4cc98a; --good-soft: #11301f; --warn: #e0ad55; --warn-soft: #2d2611;
+      --bad: #ef7a6d; --bad-soft: #331a17; --neutral: #868ea1; --neutral-soft: #1f2634;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+      --shadow-lg: 0 2px 8px rgba(0,0,0,.5), 0 22px 50px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="light"]{--bg:#f4f6fa;--surface:#fff;--surface-2:#eceff5;--surface-3:#e3e7f0;--ink:#141824;--ink-2:#3a4257;--muted:#6a7286;--hairline:#dfe3ec;--hairline-strong:#cbd1de;--accent:#2f56d6;--accent-soft:#e6ecfd;--accent-ink:#1c3aa0;--teal:#0d8f89;--teal-soft:#dcf3f1;--good:#17915a;--good-soft:#dcf1e6;--warn:#b6791b;--warn-soft:#faf0d7;--bad:#c0392b;--bad-soft:#fbe6e2;--neutral:#6a7286;--neutral-soft:#e9ebf0;--shadow:0 1px 2px rgba(20,26,40,.05),0 6px 20px rgba(20,26,40,.06);--shadow-lg:0 2px 6px rgba(20,26,40,.08),0 18px 44px rgba(20,26,40,.10);}
+  :root[data-theme="dark"]{--bg:#0c0e15;--surface:#141824;--surface-2:#1b2130;--surface-3:#232a3b;--ink:#eef1f7;--ink-2:#c1c8d6;--muted:#868ea1;--hairline:#232a38;--hairline-strong:#323b4e;--accent:#7d9bff;--accent-soft:#1a2340;--accent-ink:#adbfff;--teal:#3fd0c9;--teal-soft:#10302e;--good:#4cc98a;--good-soft:#11301f;--warn:#e0ad55;--warn-soft:#2d2611;--bad:#ef7a6d;--bad-soft:#331a17;--neutral:#868ea1;--neutral-soft:#1f2634;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);--shadow-lg:0 2px 8px rgba(0,0,0,.5),0 22px 50px rgba(0,0,0,.45);}
+
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.58; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  .wrap { max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  h1,h2,h3,h4 { margin:0; letter-spacing:-.01em; text-wrap:balance; }
+  code { font-family:var(--mono); font-size:.9em; background:var(--surface-2); padding:1px 6px; border-radius:5px; border:1px solid var(--hairline); }
+  .eyebrow { font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+
+  /* hero */
+  header.hero { border-bottom:1px solid var(--hairline); background:radial-gradient(130% 130% at 90% -30%, var(--accent-soft) 0%, transparent 48%), var(--surface); }
+  .hero-inner { padding:46px 0 36px; }
+  .hero-top { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; }
+  .hero h1 { font-size:clamp(27px,4.2vw,42px); font-weight:730; line-height:1.06; }
+  .hero .lede { color:var(--ink-2); font-size:clamp(15px,1.6vw,17.5px); max-width:64ch; margin-top:12px; }
+  .brandmark { font-family:var(--mono); font-weight:700; font-size:12.5px; letter-spacing:.04em; border:1px solid var(--hairline-strong); border-radius:8px; padding:7px 12px; background:var(--surface); white-space:nowrap; }
+  .brandmark b { color:var(--accent); }
+  .toggle { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; background:var(--surface); border:1px solid var(--hairline-strong); color:var(--muted); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  .toggle:hover { color:var(--ink); border-color:var(--accent); }
+
+  /* sections */
+  section { padding:44px 0; border-top:1px solid var(--hairline); }
+  .sec-head { margin-bottom:24px; }
+  .sec-head .num { font-family:var(--mono); font-size:13px; color:var(--accent); font-weight:700; }
+  .sec-head h2 { font-size:clamp(20px,2.6vw,26px); font-weight:690; margin-top:4px; }
+  .sec-head p { color:var(--muted); font-size:14px; margin:8px 0 0; max-width:78ch; }
+
+  /* principle callouts */
+  .principles { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .principle { background:var(--surface); border:1px solid var(--hairline); border-radius:var(--r); padding:20px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+  .principle::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:linear-gradient(var(--accent),var(--teal)); }
+  .principle .k { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); font-weight:700; }
+  .principle h3 { font-size:17px; font-weight:700; margin:8px 0 6px; }
+  .principle p { font-size:13.3px; color:var(--ink-2); margin:0; }
+
+  /* topology cards */
+  .topos { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .topo { background:var(--surface); border:1px solid var(--hairline); border-radius:var(--r); box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden; }
+  .topo-head { padding:16px 18px 12px; border-bottom:1px solid var(--hairline); display:flex; align-items:flex-start; gap:12px; }
+  .topo-idx { font-family:var(--mono); font-weight:700; font-size:13px; color:#fff; background:var(--accent); border-radius:8px; min-width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .topo-head h3 { font-size:15.5px; font-weight:690; }
+  .topo-head .sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .topo-body { padding:14px 18px 18px; display:flex; flex-direction:column; gap:12px; flex:1; }
+  /* mini diagram */
+  .diag { background:var(--surface-2); border:1px solid var(--hairline); border-radius:10px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; min-height:74px; }
+  .host { border:1.5px dashed var(--hairline-strong); border-radius:8px; padding:8px 9px 9px; display:flex; flex-direction:column; gap:5px; align-items:center; background:var(--surface); }
+  .host .hlabel { font-family:var(--mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .host .row { display:flex; gap:5px; }
+  .node { font-family:var(--mono); font-size:10px; font-weight:650; padding:4px 8px; border-radius:6px; color:#fff; white-space:nowrap; }
+  .n-web { background:var(--accent); } .n-cms { background:var(--teal); } .n-db { background:#7a5bd6; } .n-st { background:#b6791b; } .n-lb { background:#455065; } .n-cdn { background:#2a9d6b; }
+  .arrow { color:var(--muted); font-size:13px; }
+  .topo .use { font-size:12.6px; color:var(--ink-2); }
+  .topo .use b { color:var(--ink); font-weight:640; }
+  /* flexibility meter */
+  .flex-row { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:11.5px; }
+  .flex-row .lbl { color:var(--muted); font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; }
+  .dots { display:inline-flex; gap:3px; }
+  .dots i { width:9px; height:9px; border-radius:50%; background:var(--surface-3); border:1px solid var(--hairline-strong); }
+  .dots i.on { background:var(--accent); border-color:var(--accent); }
+  .dots.teal i.on { background:var(--teal); border-color:var(--teal); }
+  .score { margin-top:auto; padding-top:10px; border-top:1px dashed var(--hairline); display:flex; flex-direction:column; gap:6px; }
+
+  /* matrix */
+  .table-scroll { overflow-x:auto; border:1px solid var(--hairline); border-radius:var(--r); box-shadow:var(--shadow); }
+  table { border-collapse:collapse; width:100%; min-width:820px; font-size:12.8px; background:var(--surface); }
+  thead th { text-align:left; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; padding:12px 13px; border-bottom:1px solid var(--hairline-strong); background:var(--surface-2); position:sticky; top:0; }
+  thead th:first-child { text-align:left; } thead th:not(:first-child){ text-align:center; }
+  tbody td { padding:11px 13px; border-bottom:1px solid var(--hairline); color:var(--ink-2); text-align:center; font-variant-numeric:tabular-nums; }
+  tbody td:first-child { text-align:left; font-weight:640; color:var(--ink); }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover td { background:var(--accent-soft); }
+  .rate { font-weight:700; font-family:var(--mono); font-size:12px; }
+  .r4 { color:var(--good); } .r3 { color:var(--teal); } .r2 { color:var(--warn); } .r1 { color:var(--bad); }
+
+  /* enablers */
+  .enablers { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .enabler { background:var(--surface); border:1px solid var(--hairline); border-radius:12px; padding:16px 18px; box-shadow:var(--shadow); display:flex; gap:14px; }
+  .enabler .e-idx { font-family:var(--mono); font-weight:700; font-size:15px; color:var(--accent); flex-shrink:0; width:26px; }
+  .enabler h4 { font-size:14px; font-weight:680; margin-bottom:4px; }
+  .enabler p { font-size:12.6px; color:var(--ink-2); margin:0; }
+  .enabler p .why { color:var(--muted); display:block; margin-top:3px; }
+
+  /* flow */
+  .flow { display:flex; flex-direction:column; gap:0; background:var(--surface); border:1px solid var(--hairline); border-radius:var(--r); padding:22px; box-shadow:var(--shadow); overflow-x:auto; }
+  .flow-lane { display:flex; align-items:center; gap:0; min-width:760px; }
+  .step { flex:1; background:var(--surface-2); border:1px solid var(--hairline-strong); border-radius:10px; padding:12px 13px; text-align:center; }
+  .step .st { font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); font-weight:700; }
+  .step .sd { font-size:12px; color:var(--ink-2); margin-top:4px; }
+  .flow-arrow { color:var(--muted); font-size:20px; padding:0 8px; flex-shrink:0; }
+  .flow-note { font-size:12px; color:var(--muted); margin-top:14px; text-align:center; }
+  .gate { background:var(--warn-soft); border-color:var(--warn); }
+  .gate .st { color:var(--warn); }
+
+  /* recommended architecture */
+  .rec { background:var(--surface); border:1px solid var(--hairline); border-radius:var(--r); box-shadow:var(--shadow-lg); overflow:hidden; }
+  .rec-head { padding:16px 22px; background:linear-gradient(90deg,var(--accent-soft),transparent 65%); border-bottom:1px solid var(--hairline); display:flex; align-items:center; gap:12px; }
+  .rec-head h3 { font-size:16.5px; font-weight:700; }
+  .rec-head .tag { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.06em; color:#fff; background:var(--good); border-radius:6px; padding:4px 9px; }
+  .rec-body { padding:22px; display:grid; grid-template-columns:1.3fr 1fr; gap:22px; }
+  .arch-diagram { display:flex; flex-direction:column; gap:14px; }
+  .arch-tier { border:1px solid var(--hairline); border-radius:10px; padding:12px 14px; background:var(--surface-2); }
+  .arch-tier .t-lbl { font-family:var(--mono); font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:8px; }
+  .arch-tier .t-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .pill-node { font-family:var(--mono); font-size:11px; font-weight:640; padding:6px 11px; border-radius:7px; color:#fff; }
+  .arch-notes { display:flex; flex-direction:column; gap:11px; }
+  .arch-notes .n { display:flex; gap:10px; font-size:13px; color:var(--ink-2); }
+  .arch-notes .n b { color:var(--ink); }
+  .arch-notes .chk { color:var(--good); font-weight:800; flex-shrink:0; }
+
+  .callout { display:flex; gap:14px; background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius:12px; padding:16px 18px; margin-top:22px; }
+  .callout .bang { font-size:20px; }
+  .callout p { margin:0; font-size:13.5px; color:var(--ink); }
+  .callout b { color:var(--accent-ink); }
+
+  footer { padding:30px 0 54px; color:var(--muted); font-size:12px; border-top:1px solid var(--hairline); }
+  footer .wrap { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+
+  @media (max-width:860px){ .principles,.topos,.enablers{grid-template-columns:1fr;} .rec-body{grid-template-columns:1fr;} }
+</style>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">VNG Web · Monorepo Deployment Strategy</div>
+        <h1>Một monorepo, nhiều<br>hình dạng triển khai</h1>
+        <p class="lede">So sánh chi tiết các kịch bản deploy khi dùng monorepo (Strapi CMS + Frontend + MCP tương lai), độ linh hoạt của từng kịch bản, và cách <b>xây dựng để deploy thuận lợi &amp; linh hoạt nhất</b>. Hạ tầng không phải rào cản — nên tối ưu cho khả năng mở rộng, không phải cho tiết kiệm.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+        <div class="brandmark"><b>VNG</b> · pnpm + Turborepo</div>
+        <button class="toggle" id="themeBtn">◑ Theme</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- PRINCIPLES -->
+  <section style="border-top:none;">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">01</span>
+        <h2>Ba nguyên lý gỡ bỏ hiểu lầm cốt lõi</h2>
+        <p>Trước khi so sánh, phải phá vỡ định kiến phổ biến nhất về monorepo — vì nó quyết định toàn bộ độ linh hoạt phía sau.</p>
+      </div>
+      <div class="principles">
+        <div class="principle">
+          <div class="k">Nguyên lý 1</div>
+          <h3>Monorepo ≠ mono-deploy</h3>
+          <p>Một repo <em>không</em> có nghĩa deploy tất cả cùng lúc. Mỗi app build ra <b>image OCI riêng</b>, deploy độc lập tới đích riêng. Repo là ranh giới <em>source</em>, không phải ranh giới <em>deploy</em>.</p>
+        </div>
+        <div class="principle">
+          <div class="k">Nguyên lý 2</div>
+          <h3>Image là đơn vị portable</h3>
+          <p>Sản phẩm build là image chuẩn OCI — chạy y hệt trên Docker Compose, Kubernetes, hay nhiều region. Đổi đích deploy <b>không cần build lại, không sửa code</b>.</p>
+        </div>
+        <div class="principle">
+          <div class="k">Nguyên lý 3</div>
+          <h3>Linh hoạt đến từ cách build</h3>
+          <p>Khả năng deploy linh hoạt không phải thuộc tính của "mono hay poly", mà đến từ 10 practice khi xây (mục 04): stateless, env-config, build-once, affected…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOPOLOGIES -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">02</span>
+        <h2>Phổ kịch bản triển khai — cùng một codebase</h2>
+        <p>Chính bộ image từ một monorepo có thể triển khai theo 7 hình dạng dưới đây, xếp từ đơn giản → linh hoạt cao. Điểm linh hoạt tính theo: <b>scale độc lập</b> và <b>cách ly / HA</b>.</p>
+      </div>
+      <div class="topos">
+
+        <!-- 1 -->
+        <div class="topo">
+          <div class="topo-head"><span class="topo-idx">1</span><div><h3>All-in-one host</h3><div class="sub">web + cms + db + storage · 1 máy</div></div></div>
+          <div class="topo-body">
+            <div class="diag">
+              <div class="host"><span class="hlabel">1 VM</span><div class="row"><span class="node n-web">web</span><span class="node n-cms">cms</span></div><div class="row"><span class="node n-db">db</span><span class="node n-st">storage</span></div></div>
+            </div>
+            <div class="use"><b>Dùng khi:</b> dev, demo, môi trường thử. Đơn giản nhất, một compose.</div>
+            <div class="score">
+              <div class="flex-row"><span class="lbl">Scale độc lập</span><span class="dots"><i class="on"></i><i></i><i></i><i></i></span></div>
+              <div class="flex-row"><span class="lbl">Cách ly / HA</span><span class="dots teal"><i class="on"></i><i></i><i></i><i></i></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="topo">
+          <div class="topo-head"><span class="topo-idx">2</span><div><h3>Tách tầng app</h3><div class="sub">web ↔ cms khác host · data chung</div></div></div>
+          <div class="topo-body">
+            <div class="diag">
+              <div class="host"><span class="hlabel">host public</span><div class="row"><span class="node n-web">web</span></div></div>
+              <span class="arrow">→</span>
+              <div class="host"><span class="hlabel">host nội bộ</span><div class="row"><span class="node n-cms">cms</span></div><div class="row"><span class="node n-db">db</span><span class="node n-st">storage</span></div></div>
+            </div>
+            <div class="use"><b>Dùng khi:</b> muốn <b>ẩn CMS/admin khỏi internet</b>, tách bề mặt bảo mật. FE public riêng.</div>
+            <div class="score">
+              <div class="flex-row"><span class="lbl">Scale độc lập</span><span class="dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+              <div class="flex-row"><span class="lbl">Cách ly / HA</span><span class="dots teal"><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="topo">
+          <div class="topo-head"><span class="topo-idx">3</span><div><h3>Scale ngang FE</h3><div class="sub">N × web sau load balancer</div></div></div>
+          <div class="topo-body">
+            <div class="diag">
+              <span class="node n-lb">LB</span><span class="arrow">→</span>
+              <div class="host"><span class="hlabel">web pool</span><div class="row"><span class="node n-web">web</span><span class="node n-web">web</span><span class="node n-web">web</span></div></div>
+              <span class="arrow">→</span><span class="node n-cms">cms</span>
+            </div>
+            <div class="use"><b>Dùng khi:</b> traffic public tăng. FE stateless nên nhân bản thoải mái; CMS giữ 1–2 instance.</div>
+            <div class="score">
+              <div class="flex-row"><span class="lbl">Scale độc lập</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+              <div class="flex-row"><span class="lbl">Cách ly / HA</span><span class="dots teal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="topo">
+          <div class="topo-head"><span class="topo-idx">4</span><div><h3>Đa môi trường</h3><div class="sub">dev · staging · prod — cùng image</div></div></div>
+          <div class="topo-body">
+            <div class="diag">
+              <div class="host"><span class="hlabel">staging</span><div class="row"><span class="node n-web">web</span><span class="node n-cms">cms</span></div></div>
+              <span class="arrow">⇒</span>
+              <div class="host"><span class="hlabel">production</span><div class="row"><span class="node n-web">web</span><span class="node n-cms">cms</span></div></div>
+            </div>
+            <div class="use"><b>Luôn dùng:</b> promote <b>đúng image SHA</b> đã test ở staging lên prod — "cái đã test là cái ship".</div>
+            <div class="score">
+              <div class="flex-row"><span class="lbl">Scale độc lập</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+              <div class="flex-row"><span class="lbl">Cách ly / HA</span><span class="dots teal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 -->
+        <div class="topo">
+          <div class="topo-head"><span class="topo-idx">5</span><div><h3>Kubernetes</h3><div class="sub">mỗi app = Deployment + HPA</div></div></div>
+          <div class="topo-body">
+            <div class="diag">
+              <div class="host"><span class="hlabel">cluster K8s</span><div class="row"><span class="node n-web">web ×N</span><span class="node n-cms">cms ×2</span></div><div class="row"><span class="node n-lb">ingress</span><span class="node n-db">db (managed)</span></div></div>
+            </div>
+            <div class="use"><b>Dùng khi:</b> cần autoscale + self-heal. <b>Cùng image OCI</b>, chỉ đổi manifest — không build lại.</div>
+            <div class="score">
+              <div class="flex-row"><span class="lbl">Scale độc lập</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+              <div class="flex-row"><span class="lbl">Cách ly / HA</span><span class="dots teal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6 -->
+        <div class="topo">
+          <div class="topo-head"><span class="topo-idx">6</span><div><h3>Multi-region + CDN</h3><div class="sub">web nhân bản nhiều vùng · cms trung tâm</div></div></div>
+          <div class="topo-body">
+            <div class="diag">
+              <span class="node n-cdn">CDN</span><span class="arrow">→</span>
+              <div class="host"><span class="hlabel">region A</span><div class="row"><span class="node n-web">web</span></div></div>
+              <div class="host"><span class="hlabel">region B</span><div class="row"><span class="node n-web">web</span></div></div>
+              <span class="arrow">→</span><span class="node n-cms">cms</span>
+            </div>
+            <div class="use"><b>Dùng khi:</b> cần độ trễ thấp toàn cầu / HA cao. FE gần user, CMS tập trung 1 nơi.</div>
+            <div class="score">
+              <div class="flex-row"><span class="lbl">Scale độc lập</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+              <div class="flex-row"><span class="lbl">Cách ly / HA</span><span class="dots teal"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7 -->
+        <div class="topo">
+          <div class="topo-head"><span class="topo-idx">7</span><div><h3>Multi-site (2027)</h3><div class="sub">site-2 tái dùng packages/ui</div></div></div>
+          <div class="topo-body">
+            <div class="diag">
+              <div class="host"><span class="hlabel">shared image registry</span><div class="row"><span class="node n-web">web-vng</span><span class="node n-web">web-dmf</span></div><div class="row"><span class="node n-cms">cms (multi-site)</span></div></div>
+            </div>
+            <div class="use"><b>Dùng khi:</b> thêm site mới (DMF). Thêm <code>apps/site-2</code> dùng chung <code>packages/ui</code> + CMS RBAC multi-site — pipeline affected tự lo.</div>
+            <div class="score">
+              <div class="flex-row"><span class="lbl">Scale độc lập</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+              <div class="flex-row"><span class="lbl">Cách ly / HA</span><span class="dots teal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="callout">
+        <span class="bang">💡</span>
+        <p><b>Điểm mấu chốt:</b> đi từ kịch bản 1 → 7 <b>không cần đổi codebase, không cần đổi repo</b>. Chỉ đổi nơi image được deploy và cấu hình env. Đây chính là "độ linh hoạt" mà monorepo + image portable mang lại.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MATRIX -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">03</span>
+        <h2>Ma trận đối chiếu 7 kịch bản</h2>
+        <p>Chấm theo 4 mức ●①–④●. Lưu ý: vì hạ tầng không phải rào cản, cột "Chi phí / Ops" chỉ để tham khảo — ưu tiên chọn theo nhu cầu scale &amp; bảo mật.</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Kịch bản</th><th>Deploy độc lập</th><th>Scale độc lập</th><th>Cách ly blast radius</th><th>Ẩn CMS khỏi internet</th><th>Sẵn HA</th><th>Ops phức tạp</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1 · All-in-one host</td><td><span class="rate r2">②</span></td><td><span class="rate r1">①</span></td><td><span class="rate r1">①</span></td><td><span class="rate r1">①</span></td><td><span class="rate r1">①</span></td><td><span class="rate r4">Thấp</span></td></tr>
+            <tr><td>2 · Tách tầng app</td><td><span class="rate r4">④</span></td><td><span class="rate r2">②</span></td><td><span class="rate r3">③</span></td><td><span class="rate r4">④</span></td><td><span class="rate r2">②</span></td><td><span class="rate r3">TB</span></td></tr>
+            <tr><td>3 · Scale ngang FE</td><td><span class="rate r4">④</span></td><td><span class="rate r3">③</span></td><td><span class="rate r3">③</span></td><td><span class="rate r3">③</span></td><td><span class="rate r3">③</span></td><td><span class="rate r3">TB</span></td></tr>
+            <tr><td>4 · Đa môi trường</td><td><span class="rate r4">④</span></td><td><span class="rate r3">③</span></td><td><span class="rate r4">④</span></td><td><span class="rate r3">③</span></td><td><span class="rate r3">③</span></td><td><span class="rate r3">TB</span></td></tr>
+            <tr><td>5 · Kubernetes</td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r2">Cao</span></td></tr>
+            <tr><td>6 · Multi-region + CDN</td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r1">Cao nhất</span></td></tr>
+            <tr><td>7 · Multi-site</td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r4">④</span></td><td><span class="rate r2">Cao</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENABLERS -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">04</span>
+        <h2>Xây thế nào để deploy linh hoạt nhất — 10 practice</h2>
+        <p>Đây là phần quan trọng nhất. Làm đúng 10 điều này thì <b>mọi kịch bản ở mục 02 đều mở khóa mà không phải kiến trúc lại</b>.</p>
+      </div>
+      <div class="enablers">
+        <div class="enabler"><span class="e-idx">01</span><div><h4>Mỗi app một Dockerfile + <code>turbo prune --docker</code></h4><p>Mỗi app build thành image OCI riêng, context được cắt gọn.<span class="why">→ Đơn vị deploy độc lập; build nhanh, image nhỏ.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">02</span><div><h4>Container stateless tuyệt đối</h4><p>Không state trên đĩa container: dùng Postgres + object storage ngoài.<span class="why">→ Nhân bản / dời máy / lên K8s vô tư.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">03</span><div><h4>Externalize data</h4><p>Postgres + media storage là dịch vụ riêng, không nhét trong app.<span class="why">→ App scale/redeploy không đụng dữ liệu.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">04</span><div><h4>Cấu hình qua ENV (12-factor)</h4><p>Không hardcode host/secret/URL; tất cả qua biến môi trường.<span class="why">→ Cùng một image chạy mọi môi trường/đích.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">05</span><div><h4>Build once, promote by tag</h4><p>Build image tag = commit SHA ở staging → promote y hệt lên prod.<span class="why">→ Env parity; rollback = deploy lại tag cũ.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">06</span><div><h4>Affected-based selective deploy</h4><p>Turbo tính đúng app bị ảnh hưởng (cả shared package) → chỉ deploy cái đổi.<span class="why">→ Deploy độc lập dù chung repo.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">07</span><div><h4>Decouple logic FE ↔ CMS (ISR)</h4><p>FE phục vụ từ cache/static, không gọi CMS mỗi request.<span class="why">→ Đặt web/cms chung hay khác host đều được; CMS chết public vẫn sống.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">08</span><div><h4>Shared packages qua workspace</h4><p><code>types</code>, <code>ui</code>, <code>strapi-client</code> dùng <code>workspace:*</code>, không publish.<span class="why">→ Đổi chéo atomic, không "version ceremony".</span></p></div></div>
+        <div class="enabler"><span class="e-idx">09</span><div><h4>Migration backward-compatible</h4><p>Áp dụng expand/contract cho schema Strapi.<span class="why">→ Rollout & rollback độc lập, không khóa DB với app cũ.</span></p></div></div>
+        <div class="enabler"><span class="e-idx">10</span><div><h4>Artifact trung lập với đích</h4><p>Chỉ tạo image OCI chuẩn — không phụ thuộc Compose hay K8s.<span class="why">→ Hôm nay Compose, mai K8s, mốt multi-region: không build lại.</span></p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">05</span>
+        <h2>Flow CI/CD: chỉ deploy đúng thứ đổi</h2>
+        <p>Cùng một pipeline phục vụ mọi kịch bản deploy. "Affected" là bộ não quyết định deploy cái nào.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-lane">
+          <div class="step"><div class="st">Detect</div><div class="sd">turbo <code>--affected</code> → app nào đổi (kèm shared deps)</div></div>
+          <span class="flow-arrow">→</span>
+          <div class="step"><div class="st">Build</div><div class="sd">matrix: image <code>:SHA</code> chỉ cho app đổi</div></div>
+          <span class="flow-arrow">→</span>
+          <div class="step"><div class="st">Staging</div><div class="sd">migrate (cms) → up service đổi → smoke</div></div>
+          <span class="flow-arrow">→</span>
+          <div class="step gate"><div class="st">Gate</div><div class="sd">approve / tag <code>v*</code></div></div>
+          <span class="flow-arrow">→</span>
+          <div class="step"><div class="st">Prod</div><div class="sd">promote CÙNG image → health → rollback nếu fail</div></div>
+        </div>
+        <div class="flow-note">Sửa <code>apps/web</code> → chỉ web. Sửa <code>packages/ui</code> → web. Sửa <code>packages/types</code> → web + cms + mcp. Sửa docs → không deploy gì.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECOMMENDED -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="num">06</span>
+        <h2>Kiến trúc đề xuất — tối ưu cho linh hoạt</h2>
+        <p>Vì công ty tự lo được hạ tầng, nên chọn thiết kế có <b>trần linh hoạt cao nhất</b>: bắt đầu gọn nhưng lên thẳng bất kỳ kịch bản nào mà không phải làm lại.</p>
+      </div>
+      <div class="rec">
+        <div class="rec-head"><span class="tag">KHUYẾN NGHỊ</span><h3>Monorepo · image OCI portable · tách tầng app · data externalized</h3></div>
+        <div class="rec-body">
+          <div class="arch-diagram">
+            <div class="arch-tier">
+              <div class="t-lbl">Edge / Public</div>
+              <div class="t-row"><span class="pill-node n-cdn">CDN</span><span class="pill-node n-lb">Load Balancer / Ingress</span></div>
+            </div>
+            <div class="arch-tier">
+              <div class="t-lbl">Tầng ứng dụng (stateless, scale ngang)</div>
+              <div class="t-row"><span class="pill-node n-web">web ×N (public)</span><span class="pill-node n-cms">cms ×1–2 (nội bộ + SSO)</span><span class="pill-node" style="background:#455065">mcp (tương lai)</span></div>
+            </div>
+            <div class="arch-tier">
+              <div class="t-lbl">Tầng dữ liệu (externalized, có backup)</div>
+              <div class="t-row"><span class="pill-node n-db">PostgreSQL (managed)</span><span class="pill-node n-st">Object storage / S3</span></div>
+            </div>
+          </div>
+          <div class="arch-notes">
+            <div class="n"><span class="chk">✓</span><div><b>CMS chỉ mở nội bộ</b> — sau proxy + SSO/MFA; public không chạm.</div></div>
+            <div class="n"><span class="chk">✓</span><div><b>web stateless</b> — scale ngang tùy traffic, ISR để độc lập CMS.</div></div>
+            <div class="n"><span class="chk">✓</span><div><b>Data tách riêng</b> — app redeploy/scale không rủi ro mất dữ liệu.</div></div>
+            <div class="n"><span class="chk">✓</span><div><b>Bắt đầu Compose</b> cũng được; cùng image lên K8s khi cần — không đổi gì.</div></div>
+            <div class="n"><span class="chk">✓</span><div><b>Sẵn multi-site</b> — thêm <code>apps/site-N</code>, pipeline affected tự nhận.</div></div>
+            <div class="n"><span class="chk">✓</span><div><b>Sẵn MCP/AI</b> — thêm <code>apps/mcp-server</code> dùng chung <code>packages/types</code>.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <span class="bang">🎯</span>
+        <p>Vì hạ tầng dư sức, tôi khuyên đi thẳng thiết kế <b>tách tầng + data externalized + image portable</b> ngay từ đầu (không tốn thêm công đáng kể so với all-in-one), để sau này <b>lên K8s / multi-region / multi-site chỉ là đổi cấu hình deploy</b> — codebase giữ nguyên.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>VNG Web · Monorepo Deployment Strategy · pnpm workspace + Turborepo + OCI images</span>
+    <span>Tài liệu định hướng kiến trúc — chưa scaffold code</span>
+  </div>
+</footer>
+
+<script>
+  (()=> {
+    var btn=document.getElementById('themeBtn'), root=document.documentElement;
+    btn.addEventListener('click',()=> {
+      var cur=root.getAttribute('data-theme');
+      var isDark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.setAttribute('data-theme',isDark?'light':'dark');
+    });
+  })();
+</script>

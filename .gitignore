@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.strapi/
+.turbo/
+out/
+coverage/
+
+# Strapi runtime
+apps/cms/.tmp/
+apps/cms/.cache/
+apps/cms/public/uploads/*
+!apps/cms/public/uploads/.gitkeep
+apps/cms/types/generated/
+
+# Next.js
+apps/web/next-env.d.ts
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,8 @@
+{
+  "extends": "@vng/config-tsconfig/base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["turbo.json"],
+  "exclude": ["node_modules", "apps", "packages"]
+}
