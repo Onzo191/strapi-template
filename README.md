@@ -43,3 +43,5 @@ docker compose up            # boot postgres17 + redis + cms + web
 - Commits follow **Conventional Commits** (enforced by Lefthook `commit-msg`).
 - `pre-commit` runs Biome + affected typecheck.
 - Pinned versions live in [VERSIONS.md](VERSIONS.md); bumps go through an ADR.
+
+<!-- P0 skeleton scaffolded -->
