@@ -23,6 +23,8 @@ const PUBLIC_READ_ACTIONS = [
   "api::navigation.navigation.find",
   "api::navigation.navigation.findOne",
   "api::global.global.find",
+  // Redirects (§6.3): the web middleware fetches the full table to resolve 301s.
+  "api::redirect.redirect.find",
 ];
 
 export async function ensurePublicReadPermissions(strapi: Core.Strapi): Promise<void> {

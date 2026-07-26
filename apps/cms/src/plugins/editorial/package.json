@@ -1,0 +1,29 @@
+{
+  "name": "@vng/editorial",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Editorial workflow + immutable audit log (§4.5/§4.6) — VNG local Strapi plugin.",
+  "strapi": {
+    "name": "editorial",
+    "kind": "plugin",
+    "displayName": "Editorial",
+    "description": "Content workflow, RBAC-gated transitions and an immutable audit log."
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-admin": {
+      "types": "./strapi-admin.ts",
+      "source": "./strapi-admin.ts",
+      "import": "./strapi-admin.ts",
+      "require": "./strapi-admin.ts",
+      "default": "./strapi-admin.ts"
+    },
+    "./strapi-server": {
+      "types": "./strapi-server.ts",
+      "source": "./strapi-server.ts",
+      "import": "./strapi-server.ts",
+      "require": "./strapi-server.ts",
+      "default": "./strapi-server.ts"
+    }
+  }
+}

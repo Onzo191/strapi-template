@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "editorial_audit_logs",
+  "info": {
+    "singularName": "audit-log",
+    "pluralName": "audit-logs",
+    "displayName": "Audit Log",
+    "description": "Immutable editorial audit trail (§4.5 / Req §5) — own table, append-only."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": { "visible": false },
+    "content-type-builder": { "visible": false }
+  },
+  "attributes": {
+    "action": { "type": "string", "required": true },
+    "contentType": { "type": "string" },
+    "documentId": { "type": "string" },
+    "locale": { "type": "string" },
+    "entryTitle": { "type": "string" },
+    "actorId": { "type": "integer" },
+    "actorEmail": { "type": "string" },
+    "actorName": { "type": "string" },
+    "fromStatus": { "type": "string" },
+    "toStatus": { "type": "string" },
+    "reason": { "type": "text" },
+    "snapshot": { "type": "json" },
+    "timestamp": { "type": "datetime" }
+  }
+}

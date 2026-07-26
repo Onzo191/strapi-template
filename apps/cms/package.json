@@ -10,6 +10,7 @@
     "start": "strapi start",
     "strapi": "strapi",
     "generate:types": "strapi ts:generate-types",
+    "import:redirects": "node ./scripts/import-redirects.js",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit"
   },

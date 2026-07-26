@@ -1,0 +1,9 @@
+# Legacy 404 → 301 redirect map (Req §6 — 297 URLs). One row per redirect.
+# Columns: from,to,statusCode
+#   from       legacy path (leading slash), matched by the web middleware
+#   to         new destination (path or absolute URL)
+#   statusCode 301 (permanent, default) or 302 (temporary)
+# The content team replaces the example rows below with the real 297 URLs.
+from,to,statusCode
+/gioi-thieu,/vi/ve-vng,301
+/en/about-us,/en/ve-vng,301

@@ -12,6 +12,12 @@ export default ({ env }) => ({
     enabled: true,
   },
 
+  // Local custom plugin (§4.5/§4.6): editorial workflow + immutable audit log.
+  editorial: {
+    enabled: true,
+    resolve: "./src/plugins/editorial",
+  },
+
   ...(env("AWS_BUCKET")
     ? {
         upload: {
