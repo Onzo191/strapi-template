@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { routing } from "@/i18n/routing";
 import { loadResilient } from "@/lib/prerender";
+import { siteUrl } from "@/lib/site";
 import { strapi } from "@/lib/strapi";
 import "../globals.css";
 
@@ -25,8 +26,11 @@ export async function generateMetadata({
   const siteName = global?.siteName ?? "VNG";
 
   return {
+    // Absolute base so per-page relative canonical/OG/hreflang resolve (§6.3).
+    metadataBase: siteUrl,
     title: { default: siteName, template: `%s · ${siteName}` },
     description: global?.siteDescription ?? undefined,
+    openGraph: { siteName, locale: locale === "vi" ? "vi_VN" : "en_US", type: "website" },
   };
 }
 

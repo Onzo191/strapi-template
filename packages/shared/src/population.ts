@@ -37,6 +37,12 @@ const SEO_POPULATE: PopulateClause = {
   ogImage: { fields: ["url", "alternativeText", "width", "height"] },
 };
 
+/** Sibling-locale slugs for hreflang (§6.3) — id/documentId come implicitly. */
+const LOCALIZATIONS_POPULATE: PopulateClause = { fields: ["slug", "locale"] };
+
+/** Minimal SEO on cards: just `noindex` so the sitemap can exclude them (§6.3). */
+const CARD_SEO_POPULATE: PopulateClause = { fields: ["noindex"] };
+
 /**
  * Per-component population for the page-builder dynamic zone (`blocks`).
  * Polymorphic → Strapi requires an `on` map keyed by component uid.
@@ -75,6 +81,8 @@ export const POPULATE = {
       cover: CARD_MEDIA,
       category: { fields: ["name", "slug"] },
       author: { fields: ["name", "slug"] },
+      seo: CARD_SEO_POPULATE,
+      localizations: LOCALIZATIONS_POPULATE,
     },
     detail: {
       cover: true,
@@ -82,29 +90,38 @@ export const POPULATE = {
       tags: { fields: ["name", "slug"] },
       author: { populate: { avatar: CARD_MEDIA, socialLinks: true } },
       seo: { populate: SEO_POPULATE },
+      localizations: LOCALIZATIONS_POPULATE,
     },
   },
   "landing-page": {
-    list: {},
+    list: { seo: CARD_SEO_POPULATE, localizations: LOCALIZATIONS_POPULATE },
     detail: {
       blocks: BLOCKS_POPULATE,
       seo: { populate: SEO_POPULATE },
+      localizations: LOCALIZATIONS_POPULATE,
     },
   },
   page: {
-    list: {},
+    list: { seo: CARD_SEO_POPULATE, localizations: LOCALIZATIONS_POPULATE },
     detail: {
       blocks: BLOCKS_POPULATE,
       seo: { populate: SEO_POPULATE },
+      localizations: LOCALIZATIONS_POPULATE,
     },
   },
   category: {
-    list: {},
-    detail: { articles: { fields: ARTICLE_CARD_FIELDS, populate: { cover: CARD_MEDIA } } },
+    list: { localizations: LOCALIZATIONS_POPULATE },
+    detail: {
+      articles: { fields: ARTICLE_CARD_FIELDS, populate: { cover: CARD_MEDIA } },
+      localizations: LOCALIZATIONS_POPULATE,
+    },
   },
   tag: {
-    list: {},
-    detail: { articles: { fields: ARTICLE_CARD_FIELDS, populate: { cover: CARD_MEDIA } } },
+    list: { localizations: LOCALIZATIONS_POPULATE },
+    detail: {
+      articles: { fields: ARTICLE_CARD_FIELDS, populate: { cover: CARD_MEDIA } },
+      localizations: LOCALIZATIONS_POPULATE,
+    },
   },
   author: {
     list: { avatar: CARD_MEDIA },

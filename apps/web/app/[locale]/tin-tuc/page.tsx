@@ -1,8 +1,21 @@
 import type { Locale } from "@vng/shared";
+import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArticleCardView } from "@/components/article/article-card";
 import { Pagination } from "@/components/pagination";
+import { buildMetadata } from "@/lib/seo";
 import { strapi } from "@/lib/strapi";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "articles" });
+  // Fixed list route — path shared across locales, so no `toPath`.
+  return buildMetadata(null, { title: t("title") }, { locale, path: "/tin-tuc" });
+}
 
 export default async function ArticleListPage({
   params,

@@ -1,9 +1,17 @@
 export { CACHE_PROFILES, type CacheProfile } from "./cache";
 export { type StrapiClientConfig, StrapiNotFoundError, type StrapiRequestOptions } from "./fetcher";
 export {
+  createRedirectResolver,
+  normalizeRedirectPath,
+  type RedirectHit,
+  type RedirectResolver,
+  type RedirectResolverConfig,
+} from "./redirects";
+export {
   type CreateStrapiClientOptions,
   createStrapiClient,
   type GetArticlesParams,
+  type SitemapEntry,
   type StrapiClient,
 } from "./strapi-client";
 export {

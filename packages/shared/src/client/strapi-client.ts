@@ -41,6 +41,17 @@ import {
 export interface CreateStrapiClientOptions {
   baseUrl: string;
   apiToken?: string;
+  /** Draft-read token for the §6.3 preview flow (see `StrapiClientConfig`). */
+  previewToken?: string;
+}
+
+/** A canonical, routable content entry for the dynamic sitemap (§6.3). */
+export interface SitemapEntry {
+  kind: "article" | "landing" | "page" | "category" | "tag";
+  slug: string;
+  lastModified?: string;
+  noindex: boolean;
+  localizations: Array<{ locale: Locale; slug: string }>;
 }
 
 export interface GetArticlesParams {
@@ -70,18 +81,23 @@ async function findCardBySlug<TCard extends { documentId: string }>(
   locale: string,
   query: Record<string, unknown>,
   tags: string[],
+  preview = false,
 ): Promise<TCard | null> {
   const res = await strapiRequest<StrapiCollectionResponse<TCard>>(
     config,
     collectionPath,
     { locale, filters: { slug: { $eq: slug } }, pagination: { pageSize: 1 }, ...query },
-    { tags, profile: "list" },
+    { tags, profile: "list", preview },
   );
   return res.data[0] ?? null;
 }
 
 export function createStrapiClient(options: CreateStrapiClientOptions) {
-  const config: StrapiClientConfig = { baseUrl: options.baseUrl, apiToken: options.apiToken };
+  const config: StrapiClientConfig = {
+    baseUrl: options.baseUrl,
+    apiToken: options.apiToken,
+    previewToken: options.previewToken,
+  };
 
   return {
     /** Card-shaped article feed (§5.1: ISR, tag `list:articles` [+ `category`/`tag`]). */
@@ -111,10 +127,16 @@ export function createStrapiClient(options: CreateStrapiClientOptions) {
     },
 
     /** Deep-populated article detail (§5.1: tag `article:{id}` + `list:articles`). */
-    async getArticleBySlug(slug: string, locale: Locale): Promise<Article | null> {
-      const card = await findCardBySlug<ArticleCard>(config, "/articles", slug, locale, {}, [
-        LIST_ARTICLES_TAG,
-      ]);
+    async getArticleBySlug(slug: string, locale: Locale, preview = false): Promise<Article | null> {
+      const card = await findCardBySlug<ArticleCard>(
+        config,
+        "/articles",
+        slug,
+        locale,
+        {},
+        [LIST_ARTICLES_TAG],
+        preview,
+      );
       if (!card) return null;
 
       const tags = [articleTag(card.documentId), LIST_ARTICLES_TAG];
@@ -125,13 +147,17 @@ export function createStrapiClient(options: CreateStrapiClientOptions) {
           config,
           `/articles/${card.documentId}`,
           { locale },
-          { tags, profile: "content" },
+          { tags, profile: "content", preview },
         ).then((res) => res.data),
       );
     },
 
     /** Deep-populated landing page (§5.1: tag `landing:{slug}`). */
-    async getLandingPageBySlug(slug: string, locale: Locale): Promise<LandingPage | null> {
+    async getLandingPageBySlug(
+      slug: string,
+      locale: Locale,
+      preview = false,
+    ): Promise<LandingPage | null> {
       const card = await findCardBySlug<LandingPageCard>(
         config,
         "/landing-pages",
@@ -139,6 +165,7 @@ export function createStrapiClient(options: CreateStrapiClientOptions) {
         locale,
         {},
         [LIST_LANDINGS_TAG],
+        preview,
       );
       if (!card) return null;
 
@@ -147,16 +174,22 @@ export function createStrapiClient(options: CreateStrapiClientOptions) {
           config,
           `/landing-pages/${card.documentId}`,
           { locale },
-          { tags: [landingTag(slug), LIST_LANDINGS_TAG], profile: "content" },
+          { tags: [landingTag(slug), LIST_LANDINGS_TAG], profile: "content", preview },
         ).then((res) => res.data),
       );
     },
 
     /** Deep-populated static-shell page (§5.1: static cacheLife, tag `page:{slug}`). */
-    async getPageBySlug(slug: string, locale: Locale): Promise<Page | null> {
-      const card = await findCardBySlug<PageCard>(config, "/pages", slug, locale, {}, [
-        pageTag(slug),
-      ]);
+    async getPageBySlug(slug: string, locale: Locale, preview = false): Promise<Page | null> {
+      const card = await findCardBySlug<PageCard>(
+        config,
+        "/pages",
+        slug,
+        locale,
+        {},
+        [pageTag(slug)],
+        preview,
+      );
       if (!card) return null;
 
       return orNull(
@@ -164,7 +197,7 @@ export function createStrapiClient(options: CreateStrapiClientOptions) {
           config,
           `/pages/${card.documentId}`,
           { locale },
-          { tags: [pageTag(slug)], profile: "static" },
+          { tags: [pageTag(slug)], profile: "static", preview },
         ).then((res) => res.data),
       );
     },
@@ -234,6 +267,90 @@ export function createStrapiClient(options: CreateStrapiClientOptions) {
           { tags: [GLOBAL_TAG], profile: "static" },
         ).then((res) => res.data),
       );
+    },
+
+    /**
+     * Enumerate every published, routable entry for one locale (§6.3 sitemap).
+     * Pages through each collection at pageSize 100. article/landing/page `find`
+     * is card-controlled server-side, so `seo.noindex` + `localizations` arrive
+     * via the forced list populate; category/tag `find` is not overridden, so we
+     * request those fields explicitly. Callers filter `noindex` and map `kind`
+     * + `slug` to a route (§5.1).
+     */
+    async getSitemapEntries(locale: Locale): Promise<SitemapEntry[]> {
+      const entries: SitemapEntry[] = [];
+      const toLoc = (
+        locs?: Array<{ locale: string; slug: string }>,
+      ): SitemapEntry["localizations"] =>
+        (locs ?? []).map((l) => ({ locale: l.locale as Locale, slug: l.slug }));
+
+      // Card-controlled collections: the server forces the list populate.
+      const cardCollections = [
+        { path: "/articles", kind: "article" as const, tags: [LIST_ARTICLES_TAG] },
+        { path: "/landing-pages", kind: "landing" as const, tags: [LIST_LANDINGS_TAG] },
+        { path: "/pages", kind: "page" as const, tags: [] as string[] },
+      ];
+      for (const { path, kind, tags } of cardCollections) {
+        for (let page = 1; ; page += 1) {
+          const res = await strapiRequest<
+            StrapiCollectionResponse<ArticleCard | LandingPageCard | PageCard>
+          >(
+            config,
+            path,
+            { locale, sort: ["publishedAt:desc"], pagination: { page, pageSize: 100 } },
+            { tags, profile: "list" },
+          );
+          for (const item of res.data) {
+            entries.push({
+              kind,
+              slug: item.slug,
+              lastModified: item.publishedAt ?? undefined,
+              noindex: item.seo?.noindex ?? false,
+              localizations: toLoc(item.localizations),
+            });
+          }
+          if (page >= res.meta.pagination.pageCount) break;
+        }
+      }
+
+      // Taxonomy collections: `find` is not overridden, so select fields directly.
+      const taxonomyCollections = [
+        { path: "/categories", kind: "category" as const },
+        { path: "/tags", kind: "tag" as const },
+      ];
+      for (const { path, kind } of taxonomyCollections) {
+        for (let page = 1; ; page += 1) {
+          const res = await strapiRequest<
+            StrapiCollectionResponse<{
+              slug: string;
+              updatedAt: string;
+              localizations?: Array<{ locale: string; slug: string }>;
+            }>
+          >(
+            config,
+            path,
+            {
+              locale,
+              fields: ["slug", "updatedAt"],
+              populate: { localizations: { fields: ["slug", "locale"] } },
+              pagination: { page, pageSize: 100 },
+            },
+            { tags: [LIST_ARTICLES_TAG], profile: "list" },
+          );
+          for (const item of res.data) {
+            entries.push({
+              kind,
+              slug: item.slug,
+              lastModified: item.updatedAt,
+              noindex: false,
+              localizations: toLoc(item.localizations),
+            });
+          }
+          if (page >= res.meta.pagination.pageCount) break;
+        }
+      }
+
+      return entries;
     },
   };
 }

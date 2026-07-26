@@ -8,12 +8,28 @@
 
 import type { Block } from "./blocks";
 import type { LinkComponent, NavItem, SeoComponent } from "./components";
-import type { StrapiEntityMeta, StrapiMedia } from "./media";
+import type { Locale, StrapiEntityMeta, StrapiMedia } from "./media";
+
+/**
+ * A sibling-locale reference (§6.3 hreflang). vi/en slugs are independent, so
+ * the translated slug — not a prefix swap — is what an alternate URL needs.
+ * Populated via `localizations: { fields: ["slug", "locale"] }` (§4.4).
+ */
+export interface LocalizationRef {
+  id: number;
+  documentId: string;
+  slug: string;
+  locale: Locale;
+}
+
+/** Minimal SEO projection carried on cards for sitemap noindex filtering (§6.3). */
+export type CardSeo = Pick<SeoComponent, "noindex"> | null;
 
 export interface Category extends StrapiEntityMeta {
   name: string;
   slug: string;
   description?: string | null;
+  localizations?: LocalizationRef[];
 }
 
 /** Category detail (§4.4: `findOne` populates the category's article cards). */
@@ -24,6 +40,7 @@ export interface CategoryDetail extends Category {
 export interface Tag extends StrapiEntityMeta {
   name: string;
   slug: string;
+  localizations?: LocalizationRef[];
 }
 
 /** Tag detail (§4.4: `findOne` populates the tag's article cards). */
@@ -50,6 +67,9 @@ export interface ArticleCard extends StrapiEntityMeta {
   cover?: StrapiMedia | null;
   category?: Pick<Category, "id" | "documentId" | "name" | "slug"> | null;
   author?: Pick<Author, "id" | "documentId" | "name" | "slug"> | null;
+  /** Sitemap noindex filtering (§6.3) — selected `noindex` only on list. */
+  seo?: CardSeo;
+  localizations?: LocalizationRef[];
 }
 
 /** Full article detail (deep-populated). */
@@ -62,6 +82,8 @@ export interface Article extends ArticleCard {
 export interface LandingPageCard extends StrapiEntityMeta {
   title: string;
   slug: string;
+  seo?: CardSeo;
+  localizations?: LocalizationRef[];
 }
 
 export interface LandingPage extends LandingPageCard {
@@ -72,6 +94,8 @@ export interface LandingPage extends LandingPageCard {
 export interface PageCard extends StrapiEntityMeta {
   title: string;
   slug: string;
+  seo?: CardSeo;
+  localizations?: LocalizationRef[];
 }
 
 export interface Page extends PageCard {

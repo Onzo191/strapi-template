@@ -1,46 +1,76 @@
 import type { Locale } from "@vng/shared";
 import type { Metadata } from "next";
+import { draftMode } from "next/headers";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { RichText } from "@/components/rich-text";
-import { Link } from "@/i18n/navigation";
+import { JsonLd } from "@/components/seo/json-ld";
+import { getPathname, Link } from "@/i18n/navigation";
+import { breadcrumbSchema, newsArticleSchema } from "@/lib/jsonld";
 import { resolveMediaUrl } from "@/lib/media";
 import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 import { strapi } from "@/lib/strapi";
 
 interface ArticlePageProps {
   params: Promise<{ locale: Locale; slug: string }>;
 }
 
+const articlePath = (slug: string) => `/tin-tuc/${slug}`;
+
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const article = await strapi.getArticleBySlug(slug, locale);
+  const { isEnabled: preview } = await draftMode();
+  const [article, global] = await Promise.all([
+    strapi.getArticleBySlug(slug, locale, preview),
+    strapi.getGlobal(locale),
+  ]);
   if (!article) return {};
 
-  return buildMetadata(article.seo, {
-    title: article.title,
-    description: article.excerpt ?? undefined,
-  });
+  return buildMetadata(
+    article.seo,
+    { title: article.title, description: article.excerpt ?? undefined },
+    {
+      locale,
+      path: articlePath(slug),
+      localizations: article.localizations,
+      toPath: articlePath,
+      ogType: "article",
+      siteName: global?.siteName,
+    },
+  );
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
 
-  const article = await strapi.getArticleBySlug(slug, locale);
+  const { isEnabled: preview } = await draftMode();
+  const [article, global] = await Promise.all([
+    strapi.getArticleBySlug(slug, locale, preview),
+    strapi.getGlobal(locale),
+  ]);
   if (!article) notFound();
 
   const t = await getTranslations("articles");
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: article.title,
-    description: article.excerpt ?? undefined,
-    datePublished: article.publishedAt ?? undefined,
-    author: article.author ? { "@type": "Person", name: article.author.name } : undefined,
-  };
+  const url = absoluteUrl(getPathname({ locale, href: articlePath(slug) }));
+  const crumbs = [
+    { name: global?.siteName ?? "VNG", url: absoluteUrl(getPathname({ locale, href: "/" })) },
+    { name: t("title"), url: absoluteUrl(getPathname({ locale, href: "/tin-tuc" })) },
+    ...(article.category
+      ? [
+          {
+            name: article.category.name,
+            url: absoluteUrl(getPathname({ locale, href: `/category/${article.category.slug}` })),
+          },
+        ]
+      : []),
+    { name: article.title, url },
+  ];
+
+  const jsonLd = [newsArticleSchema(article, { url, global, locale }), breadcrumbSchema(crumbs)];
 
   return (
     <article className="vng-section">
@@ -94,11 +124,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </div>
         )}
 
-        <script
-          type="application/ld+json"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: fixed JSON-LD payload built from validated article data, not user HTML
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <JsonLd data={jsonLd} />
       </div>
     </article>
   );

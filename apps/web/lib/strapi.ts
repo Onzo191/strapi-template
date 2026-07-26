@@ -9,4 +9,5 @@ import { createStrapiClient } from "@vng/shared";
 export const strapi = createStrapiClient({
   baseUrl: process.env.STRAPI_URL ?? "http://localhost:1337",
   apiToken: process.env.STRAPI_API_TOKEN,
+  previewToken: process.env.STRAPI_PREVIEW_TOKEN,
 });

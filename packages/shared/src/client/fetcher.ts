@@ -15,11 +15,23 @@ export interface StrapiClientConfig {
   baseUrl: string;
   /** Optional read-only API token (Bearer) for non-public content. */
   apiToken?: string;
+  /**
+   * Draft-read API token (§6.3 preview). Distinct from `apiToken` because the
+   * public token must NOT be able to read unpublished content; only the preview
+   * flow (a signed `draftMode` session) uses this one.
+   */
+  previewToken?: string;
 }
 
 export interface StrapiRequestOptions {
   tags: string[];
   profile: CacheProfile;
+  /**
+   * Draft preview (§6.3). When true: request `status=draft`, authenticate with
+   * `previewToken`, and bypass the ISR cache entirely (`no-store`) so an editor
+   * always sees the latest draft — never a cached published copy.
+   */
+  preview?: boolean;
 }
 
 export class StrapiNotFoundError extends Error {
@@ -45,15 +57,18 @@ export async function strapiRequest<T>(
   query: Record<string, unknown>,
   options: StrapiRequestOptions,
 ): Promise<T> {
-  const qs = toQueryString(query);
+  // Preview reads the draft version and must never be served from the ISR cache.
+  const effectiveQuery = options.preview ? { ...query, status: "draft" } : query;
+  const token = options.preview ? (config.previewToken ?? config.apiToken) : config.apiToken;
+
+  const qs = toQueryString(effectiveQuery);
   const url = `${config.baseUrl}/api${path}${qs ? `?${qs}` : ""}`;
 
   const init: FetchInit = {
-    headers: config.apiToken ? { Authorization: `Bearer ${config.apiToken}` } : undefined,
-    next: {
-      tags: options.tags,
-      revalidate: CACHE_PROFILES[options.profile],
-    },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    ...(options.preview
+      ? { cache: "no-store" }
+      : { next: { tags: options.tags, revalidate: CACHE_PROFILES[options.profile] } }),
   };
 
   const res = await fetch(url, init);
