@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_elements_form_fields",
+  "info": { "displayName": "Form Field", "icon": "apps" },
+  "options": {},
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "label": { "type": "string", "required": true },
+    "type": {
+      "type": "enumeration",
+      "enum": ["text", "email", "tel", "textarea", "select", "checkbox"],
+      "default": "text"
+    },
+    "placeholder": { "type": "string" },
+    "required": { "type": "boolean", "default": false },
+    "options": { "type": "text" }
+  }
+}

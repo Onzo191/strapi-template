@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_blocks_logo_clouds",
+  "info": {
+    "displayName": "Logo Cloud",
+    "icon": "apps",
+    "description": "Row/grid of partner or brand logos."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "logos": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.logo-item",
+      "required": true
+    }
+  }
+}

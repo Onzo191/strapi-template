@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_blocks_ctas",
+  "info": { "displayName": "CTA", "icon": "cursor", "description": "Call-to-action banner." },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string", "required": true },
+    "description": { "type": "text" },
+    "actions": { "type": "component", "repeatable": true, "component": "shared.link", "max": 3 },
+    "background": {
+      "type": "enumeration",
+      "enum": ["default", "muted", "dark", "gradient"],
+      "default": "muted"
+    }
+  }
+}

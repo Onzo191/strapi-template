@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_blocks_rich_texts",
+  "info": {
+    "displayName": "Rich Text",
+    "icon": "bulletList",
+    "description": "Free-form rich-text content."
+  },
+  "options": {},
+  "attributes": {
+    "content": { "type": "blocks", "required": true },
+    "width": { "type": "enumeration", "enum": ["narrow", "default", "wide"], "default": "default" }
+  }
+}

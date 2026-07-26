@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_blocks_contact_forms",
+  "info": {
+    "displayName": "Contact Form",
+    "icon": "envelope",
+    "description": "Newsletter / contact form block."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "description": { "type": "text" },
+    "submitLabel": { "type": "string", "default": "Send" },
+    "successMessage": { "type": "text" },
+    "endpoint": { "type": "string" },
+    "fields": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.form-field",
+      "required": true
+    }
+  }
+}

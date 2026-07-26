@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_blocks_leadership_grids",
+  "info": {
+    "displayName": "Leadership Grid",
+    "icon": "user",
+    "description": "Grid of leadership / team profiles."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "leaders": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.leader",
+      "required": true
+    }
+  }
+}

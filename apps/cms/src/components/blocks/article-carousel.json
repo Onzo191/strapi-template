@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_blocks_article_carousels",
+  "info": {
+    "displayName": "Article Carousel",
+    "icon": "layer",
+    "description": "Auto-pulls latest N articles (optionally by category), or a manual pick."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "autoPull": { "type": "boolean", "default": true },
+    "limit": { "type": "integer", "default": 6, "min": 1, "max": 24 },
+    "category": { "type": "relation", "relation": "oneToOne", "target": "api::category.category" },
+    "articles": { "type": "relation", "relation": "oneToMany", "target": "api::article.article" }
+  }
+}

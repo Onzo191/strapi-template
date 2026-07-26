@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_blocks_feature_grids",
+  "info": {
+    "displayName": "Feature Grid",
+    "icon": "grid",
+    "description": "Grid of features/benefits."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "description": { "type": "text" },
+    "features": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.feature-item",
+      "required": true
+    },
+    "columns": { "type": "integer", "default": 3, "min": 1, "max": 4 }
+  }
+}

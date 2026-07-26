@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "redirects",
+  "info": {
+    "singularName": "redirect",
+    "pluralName": "redirects",
+    "displayName": "Redirect",
+    "description": "301 map (from → to) — legacy 404 cleanup (Req §6, §4.1)."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "from": { "type": "string", "required": true, "unique": true },
+    "to": { "type": "string", "required": true },
+    "permanent": { "type": "boolean", "default": true },
+    "statusCode": {
+      "type": "integer",
+      "default": 301,
+      "min": 300,
+      "max": 399
+    }
+  }
+}

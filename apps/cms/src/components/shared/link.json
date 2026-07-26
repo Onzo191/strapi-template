@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_shared_links",
+  "info": {
+    "displayName": "Link",
+    "icon": "link",
+    "description": "A labelled link / button used across blocks."
+  },
+  "options": {},
+  "attributes": {
+    "label": { "type": "string", "required": true },
+    "href": { "type": "string", "required": true },
+    "target": { "type": "enumeration", "enum": ["_self", "_blank"], "default": "_self" },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["primary", "secondary", "outline", "link"],
+      "default": "primary"
+    },
+    "icon": { "type": "string" }
+  }
+}

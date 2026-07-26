@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_blocks_media",
+  "info": {
+    "displayName": "Media",
+    "icon": "picture",
+    "description": "Single image or video with caption."
+  },
+  "options": {},
+  "attributes": {
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images", "videos", "files"],
+      "required": true
+    },
+    "caption": { "type": "string" },
+    "alt": { "type": "string" },
+    "width": {
+      "type": "enumeration",
+      "enum": ["narrow", "default", "wide", "full"],
+      "default": "default"
+    }
+  }
+}

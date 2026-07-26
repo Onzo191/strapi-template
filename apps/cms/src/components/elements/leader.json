@@ -1,0 +1,12 @@
+{
+  "collectionName": "components_elements_leaders",
+  "info": { "displayName": "Leader", "icon": "user" },
+  "options": {},
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "role": { "type": "string" },
+    "photo": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "bio": { "type": "text" },
+    "socials": { "type": "component", "repeatable": true, "component": "shared.link" }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "collectionName": "components_navigation_nav_links",
+  "info": { "displayName": "Nav Link", "icon": "link" },
+  "options": {},
+  "attributes": {
+    "label": { "type": "string", "required": true },
+    "url": { "type": "string" },
+    "target": { "type": "enumeration", "enum": ["_self", "_blank"], "default": "_self" }
+  }
+}

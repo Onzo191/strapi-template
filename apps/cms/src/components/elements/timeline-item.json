@@ -1,0 +1,11 @@
+{
+  "collectionName": "components_elements_timeline_items",
+  "info": { "displayName": "Timeline Item", "icon": "clock" },
+  "options": {},
+  "attributes": {
+    "date": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "description": { "type": "text" },
+    "media": { "type": "media", "multiple": false, "allowedTypes": ["images"] }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_blocks_timelines",
+  "info": {
+    "displayName": "Timeline",
+    "icon": "clock",
+    "description": "Chronological history / milestones."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "events": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.timeline-item",
+      "required": true
+    }
+  }
+}

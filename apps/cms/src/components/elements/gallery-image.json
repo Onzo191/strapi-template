@@ -1,0 +1,10 @@
+{
+  "collectionName": "components_elements_gallery_images",
+  "info": { "displayName": "Gallery Image", "icon": "picture" },
+  "options": {},
+  "attributes": {
+    "image": { "type": "media", "multiple": false, "allowedTypes": ["images"], "required": true },
+    "caption": { "type": "string" },
+    "alt": { "type": "string" }
+  }
+}

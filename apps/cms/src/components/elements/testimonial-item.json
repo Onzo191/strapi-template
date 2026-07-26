@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_elements_testimonial_items",
+  "info": { "displayName": "Testimonial Item", "icon": "quote" },
+  "options": {},
+  "attributes": {
+    "quote": { "type": "text", "required": true },
+    "authorName": { "type": "string", "required": true },
+    "authorRole": { "type": "string" },
+    "company": { "type": "string" },
+    "avatar": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "rating": { "type": "integer", "min": 0, "max": 5 }
+  }
+}

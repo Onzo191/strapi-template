@@ -1,0 +1,23 @@
+{
+  "common": {
+    "readMore": "Đọc thêm",
+    "previous": "Trước",
+    "next": "Tiếp theo",
+    "backHome": "Về trang chủ",
+    "notFoundTitle": "Không tìm thấy nội dung",
+    "notFoundBody": "Nội dung bạn tìm không tồn tại hoặc đã bị gỡ bỏ."
+  },
+  "articles": {
+    "title": "Tin tức",
+    "empty": "Chưa có bài viết nào.",
+    "by": "bởi",
+    "category": "Chuyên mục",
+    "tags": "Thẻ"
+  },
+  "category": {
+    "title": "Chuyên mục: {name}"
+  },
+  "tag": {
+    "title": "Thẻ: {name}"
+  }
+}

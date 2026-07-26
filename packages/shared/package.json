@@ -6,17 +6,29 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
+      "require": "./dist/index.cjs",
+      "import": "./src/index.ts",
       "default": "./src/index.ts"
     }
   },
-  "main": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./src/index.ts",
   "types": "./src/index.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs",
     "typecheck": "tsc --noEmit",
     "lint": "biome check ."
   },
+  "dependencies": {
+    "zod": "3.25.76"
+  },
   "devDependencies": {
     "@vng/config-tsconfig": "workspace:*",
+    "esbuild": "0.28.1",
     "typescript": "5.9.3"
   }
 }

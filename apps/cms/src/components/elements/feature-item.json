@@ -1,0 +1,11 @@
+{
+  "collectionName": "components_elements_feature_items",
+  "info": { "displayName": "Feature Item", "icon": "grid" },
+  "options": {},
+  "attributes": {
+    "icon": { "type": "string" },
+    "title": { "type": "string", "required": true },
+    "description": { "type": "text" },
+    "link": { "type": "component", "repeatable": false, "component": "shared.link" }
+  }
+}

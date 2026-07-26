@@ -5,6 +5,6 @@
     "rootDir": ".",
     "noImplicitAny": false
   },
-  "include": ["./src/**/*.ts", "./config/**/*.ts"],
+  "include": ["./src/**/*.ts", "./src/**/*.json", "./config/**/*.ts"],
   "exclude": ["node_modules", "build", "dist", ".cache", ".tmp", ".strapi", "types/generated"]
 }

@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_blocks_stats",
+  "info": {
+    "displayName": "Stats",
+    "icon": "chartBubble",
+    "description": "Key numbers / statistics row."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "stats": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.stat-item",
+      "required": true
+    }
+  }
+}

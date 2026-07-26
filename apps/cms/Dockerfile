@@ -8,6 +8,9 @@ WORKDIR /app
 FROM base AS build
 COPY . .
 RUN pnpm install --frozen-lockfile
+# Build workspace deps first: Strapi (CommonJS) require()s @vng/shared's
+# compiled dist/index.cjs, so it must exist before `strapi build`/`start`.
+RUN pnpm --filter @vng/shared build
 RUN pnpm --filter @vng/cms build
 
 FROM base AS runtime

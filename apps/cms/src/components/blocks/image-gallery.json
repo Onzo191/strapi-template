@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_blocks_image_galleries",
+  "info": {
+    "displayName": "Image Gallery",
+    "icon": "picture",
+    "description": "Grid of captioned images."
+  },
+  "options": {},
+  "attributes": {
+    "title": { "type": "string" },
+    "images": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.gallery-image",
+      "required": true
+    },
+    "columns": { "type": "integer", "default": 3, "min": 1, "max": 6 }
+  }
+}

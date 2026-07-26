@@ -1,0 +1,23 @@
+{
+  "common": {
+    "readMore": "Read more",
+    "previous": "Previous",
+    "next": "Next",
+    "backHome": "Back to home",
+    "notFoundTitle": "Content not found",
+    "notFoundBody": "The content you're looking for doesn't exist or was removed."
+  },
+  "articles": {
+    "title": "News",
+    "empty": "No articles yet.",
+    "by": "by",
+    "category": "Category",
+    "tags": "Tags"
+  },
+  "category": {
+    "title": "Category: {name}"
+  },
+  "tag": {
+    "title": "Tag: {name}"
+  }
+}

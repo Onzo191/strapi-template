@@ -1,0 +1,12 @@
+{
+  "collectionName": "components_navigation_nav_items",
+  "info": { "displayName": "Nav Item", "icon": "bulletList" },
+  "options": {},
+  "attributes": {
+    "label": { "type": "string", "required": true },
+    "url": { "type": "string" },
+    "page": { "type": "relation", "relation": "oneToOne", "target": "api::page.page" },
+    "target": { "type": "enumeration", "enum": ["_self", "_blank"], "default": "_self" },
+    "children": { "type": "component", "repeatable": true, "component": "navigation.nav-link" }
+  }
+}

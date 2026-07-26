@@ -10,11 +10,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@strapi/blocks-react-renderer": "1.0.2",
     "@vng/design-system": "workspace:*",
     "@vng/shared": "workspace:*",
     "next": "16.2.11",
+    "next-intl": "4.13.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "0.0.1"
   },
   "devDependencies": {
     "@types/node": "24.13.3",

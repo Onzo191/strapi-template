@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_blocks_heroes",
+  "info": {
+    "displayName": "Hero",
+    "icon": "layout",
+    "description": "Page hero with heading, media and CTAs."
+  },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string", "required": true },
+    "subheading": { "type": "text" },
+    "eyebrow": { "type": "string" },
+    "media": { "type": "media", "multiple": false, "allowedTypes": ["images", "videos"] },
+    "background": {
+      "type": "enumeration",
+      "enum": ["default", "muted", "dark", "gradient"],
+      "default": "default"
+    },
+    "alignment": { "type": "enumeration", "enum": ["left", "center"], "default": "left" },
+    "actions": { "type": "component", "repeatable": true, "component": "shared.link", "max": 3 }
+  }
+}
