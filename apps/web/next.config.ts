@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -14,6 +15,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Workspace packages are shipped as TypeScript source and compiled by Next.
   transpilePackages: ["@vng/shared", "@vng/design-system"],
+  // Redis-backed ISR cache (§5.3) — makes `revalidateTag` cluster-wide so a
+  // publish webhook to one instance invalidates every instance. Next only
+  // uses `cacheHandler` in production builds (`next dev` bypasses it).
+  // `cacheMaxMemorySize: 0` disables the default in-memory layer so no
+  // instance can serve stale HTML out of local memory after a revalidation.
+  cacheHandler: join(process.cwd(), "cache-handler.mjs"),
+  cacheMaxMemorySize: 0,
   images: {
     remotePatterns: [
       {

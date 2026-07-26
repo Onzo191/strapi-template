@@ -58,6 +58,12 @@ services:
       DATABASE_USERNAME: vng
       DATABASE_PASSWORD: vng
       DATABASE_SSL: "false"
+      # P3 revalidation webhook (§5.3). The CMS signs with REVALIDATE_SECRET
+      # and POSTs to a SINGLE web instance (`web`). The Redis-backed cache
+      # handler then propagates the invalidation to `web2` too — this is the
+      # multi-instance behaviour we're proving.
+      WEB_REVALIDATE_URL: http://web:3000/api/revalidate
+      REVALIDATE_SECRET: dev-revalidate-secret-change-me
     ports:
       - "1337:1337"
     volumes:
@@ -68,22 +74,43 @@ services:
       redis:
         condition: service_healthy
 
+  # Two web instances behind a SHARED Redis (§A2). The webhook only ever hits
+  # `web`; `web2` must still go fresh via Redis — that's the P3 proof.
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    image: vng-web:local
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
       # Server-side calls to Strapi go over the compose network.
       STRAPI_URL: http://cms:1337
-      # Redis is provisioned for the ISR cache handler wired in phase P3.
+      # Shared ISR cache — the same Redis both instances read/write (§5.3).
       REDIS_URL: redis://redis:6379
+      # Must match the CMS's REVALIDATE_SECRET to accept signed webhooks.
+      REVALIDATE_SECRET: dev-revalidate-secret-change-me
     ports:
       - "3000:3000"
     depends_on:
       - cms
+      - redis
+
+  web2:
+    # Reuses the image built by `web` (no second build).
+    image: vng-web:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      STRAPI_URL: http://cms:1337
+      REDIS_URL: redis://redis:6379
+      REVALIDATE_SECRET: dev-revalidate-secret-change-me
+    ports:
+      - "3001:3000"
+    depends_on:
+      - web
       - redis
 
 volumes:

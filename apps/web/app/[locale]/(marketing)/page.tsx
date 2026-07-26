@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { BlockRenderer } from "@/components/blocks/registry";
+import { loadResilient } from "@/lib/prerender";
 import { buildMetadata } from "@/lib/seo";
 import { strapi } from "@/lib/strapi";
 
@@ -14,7 +15,7 @@ interface HomePageProps {
 
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
   const { locale } = await params;
-  const landing = await strapi.getLandingPageBySlug(HOME_SLUG, locale);
+  const landing = await loadResilient(() => strapi.getLandingPageBySlug(HOME_SLUG, locale));
   if (!landing) return {};
   return buildMetadata(landing.seo, { title: landing.title });
 }
@@ -24,7 +25,7 @@ export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const landing = await strapi.getLandingPageBySlug(HOME_SLUG, locale);
+  const landing = await loadResilient(() => strapi.getLandingPageBySlug(HOME_SLUG, locale));
   if (!landing) notFound();
 
   return <BlockRenderer blocks={landing.blocks ?? []} />;

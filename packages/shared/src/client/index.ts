@@ -15,5 +15,8 @@ export {
   landingTag,
   navigationTag,
   pageTag,
+  type RevalidateModel,
+  type RevalidatePayload,
+  tagsForEntry,
   tagTag,
 } from "./tags";

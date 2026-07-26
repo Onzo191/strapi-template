@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { routing } from "@/i18n/routing";
+import { loadResilient } from "@/lib/prerender";
 import { strapi } from "@/lib/strapi";
 import "../globals.css";
 
@@ -20,7 +21,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const global = await strapi.getGlobal(locale as Locale);
+  const global = await loadResilient(() => strapi.getGlobal(locale as Locale));
   const siteName = global?.siteName ?? "VNG";
 
   return {
@@ -42,12 +43,14 @@ export default async function LocaleLayout({
   }
   setRequestLocale(locale);
 
-  const [messages, header, footer, global] = await Promise.all([
-    getMessages(),
-    strapi.getNavigationBySlug("main-header", locale),
-    strapi.getNavigationBySlug("main-footer", locale),
-    strapi.getGlobal(locale),
-  ]);
+  const [messages, header, footer, global] = await loadResilient(() =>
+    Promise.all([
+      getMessages(),
+      strapi.getNavigationBySlug("main-header", locale),
+      strapi.getNavigationBySlug("main-footer", locale),
+      strapi.getGlobal(locale),
+    ]),
+  );
 
   return (
     <html lang={locale}>
