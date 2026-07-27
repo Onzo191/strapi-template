@@ -2,26 +2,27 @@ import type { StatsBlock } from "@vng/shared";
 
 export function Stats(block: StatsBlock) {
   return (
-    <section className="vng-section vng-section--muted">
-      <div className="vng-container">
-        {block.heading && <h2 style={{ textAlign: "center" }}>{block.heading}</h2>}
+    <section className="bg-muted py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        {block.heading && (
+          <h2 className="text-center text-display-sm font-bold text-balance">{block.heading}</h2>
+        )}
         <div
-          className="vng-grid"
+          className="mt-10 grid gap-8 text-center"
           style={{
             gridTemplateColumns: `repeat(${Math.min(block.stats.length, 4)}, minmax(0, 1fr))`,
-            textAlign: "center",
           }}
         >
           {block.stats.map((stat) => (
             <div key={stat.id}>
-              <p style={{ fontSize: "2.5rem", fontWeight: 700, margin: 0 }}>
+              <p className="text-4xl font-bold md:text-5xl">
                 {stat.prefix}
                 {stat.value}
                 {stat.suffix}
               </p>
-              <p style={{ opacity: 0.75, margin: "0.25rem 0 0" }}>{stat.label}</p>
+              <p className="mt-1 font-medium text-muted-foreground">{stat.label}</p>
               {stat.description && (
-                <p style={{ opacity: 0.6, fontSize: "0.85rem" }}>{stat.description}</p>
+                <p className="mt-1 text-sm text-muted-foreground/80">{stat.description}</p>
               )}
             </div>
           ))}

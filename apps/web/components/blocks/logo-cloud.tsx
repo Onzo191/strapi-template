@@ -5,32 +5,29 @@ import { resolveMediaUrl } from "@/lib/media";
 
 export function LogoCloud(block: LogoCloudBlock) {
   return (
-    <section className="vng-section">
-      <div className="vng-container">
-        {block.heading && <h2 style={{ textAlign: "center" }}>{block.heading}</h2>}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "2.5rem",
-            marginTop: "1.5rem",
-          }}
-        >
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        {block.heading && (
+          <h2 className="text-center text-display-sm font-bold text-balance">{block.heading}</h2>
+        )}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-10">
           {block.logos.map((logo) => {
-            const image = logo.logo && (
+            // Falls back to the logo's name as visible text when no image is set —
+            // an image-less entry must still give its link/content a discernible name.
+            const content = logo.logo ? (
               <Image
                 src={resolveMediaUrl(logo.logo.url)}
                 alt={logo.name}
                 width={logo.logo.width ?? 160}
                 height={logo.logo.height ?? 60}
-                style={{ height: "2.5rem", width: "auto", objectFit: "contain" }}
+                className="h-10 w-auto object-contain grayscale transition-all hover:grayscale-0"
               />
+            ) : (
+              <span className="text-lg font-semibold text-muted-foreground">{logo.name}</span>
             );
             return (
               <div key={logo.id}>
-                {logo.url ? <SmartLink href={logo.url}>{image}</SmartLink> : image}
+                {logo.url ? <SmartLink href={logo.url}>{content}</SmartLink> : content}
               </div>
             );
           })}

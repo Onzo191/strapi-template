@@ -9,6 +9,7 @@
   },
   "articles": {
     "title": "News",
+    "description": "The latest news, events, and updates from VNG.",
     "empty": "No articles yet.",
     "by": "by",
     "category": "Category",
@@ -18,6 +19,7 @@
     "title": "Category: {name}"
   },
   "tag": {
-    "title": "Tag: {name}"
+    "title": "Tag: {name}",
+    "description": "Articles tagged {name} at VNG."
   }
 }

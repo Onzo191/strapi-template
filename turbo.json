@@ -38,6 +38,14 @@
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["coverage/**"]
     },
+    "e2e": {
+      "dependsOn": ["@vng/web#build"],
+      "cache": false
+    },
+    "lighthouse": {
+      "dependsOn": ["@vng/web#build"],
+      "cache": false
+    },
     "dev": {
       "cache": false,
       "persistent": true

@@ -1,11 +1,22 @@
 /**
  * @vng/design-system — shadcn/ui components, design tokens and theme provider.
- *
- * Skeleton only: intentionally empty. Components, tokens and the next-themes
- * provider land in the design-system phase (P5).
  */
 
-/** Placeholder so the package has a typed public surface and compiles. */
-export const DESIGN_SYSTEM_PACKAGE = "@vng/design-system" as const;
-
-export type DesignSystemPackage = typeof DESIGN_SYSTEM_PACKAGE;
+export * from "./components/ui/badge";
+export * from "./components/ui/button";
+export * from "./components/ui/card";
+export * from "./components/ui/checkbox";
+export * from "./components/ui/dropdown-menu";
+export * from "./components/ui/form";
+export * from "./components/ui/input";
+export * from "./components/ui/label";
+export * from "./components/ui/navigation-menu";
+export * from "./components/ui/select";
+export * from "./components/ui/separator";
+export * from "./components/ui/sheet";
+export * from "./components/ui/skeleton";
+export * from "./components/ui/textarea";
+export * from "./lib/utils";
+export * from "./motion/reveal";
+export * from "./theme/theme-provider";
+export * from "./theme/theme-toggle";

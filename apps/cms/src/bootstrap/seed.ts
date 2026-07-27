@@ -215,7 +215,7 @@ export async function seed(strapi: Core.Strapi): Promise<void> {
       eyebrow: "Về VNG",
       background: "gradient",
       alignment: "center",
-      actions: [{ label: "Tìm hiểu thêm", href: "/tin-tuc", variant: "primary" }],
+      actions: [{ label: "Xem tin tức mới nhất", href: "/tin-tuc", variant: "primary" }],
     },
     {
       __component: "blocks.stats",
@@ -253,7 +253,7 @@ export async function seed(strapi: Core.Strapi): Promise<void> {
       eyebrow: "About VNG",
       background: "gradient",
       alignment: "center",
-      actions: [{ label: "Learn more", href: "/news", variant: "primary" }],
+      actions: [{ label: "See the latest news", href: "/news", variant: "primary" }],
     },
     {
       __component: "blocks.stats",
@@ -313,6 +313,285 @@ export async function seed(strapi: Core.Strapi): Promise<void> {
   });
   await publish(strapi, "api::landing-page.landing-page", landing.documentId, "vi");
   await publish(strapi, "api::landing-page.landing-page", landing.documentId, "en");
+
+  // --- About page (static shell, vi + en, published) ------------------------
+  // Exercises the block types `home`'s landing pages don't (§P5 design-system
+  // restyle needs real content to render against): leadership-grid, timeline,
+  // logo-cloud, testimonial, faq, embed, contact-form. `image-gallery` is
+  // skipped — its `elements.gallery-image.image` field is a required media
+  // relation, and seeding a real uploaded asset is out of scope here.
+  const aboutBlocksVi = [
+    {
+      __component: "blocks.hero",
+      heading: "Về VNG",
+      subheading: "Kiến tạo công nghệ vì cuộc sống tốt đẹp hơn.",
+      eyebrow: "Giới thiệu",
+      background: "default",
+      alignment: "left",
+      actions: [{ label: "Xem vị trí tuyển dụng", href: "/tuyen-dung", variant: "outline" }],
+    },
+    {
+      __component: "blocks.leadership-grid",
+      heading: "Đội ngũ lãnh đạo",
+      leaders: [
+        {
+          name: "Nguyễn Văn A",
+          role: "Chủ tịch kiêm Tổng giám đốc",
+          bio: "Dẫn dắt chiến lược phát triển công nghệ của VNG.",
+        },
+        {
+          name: "Trần Thị B",
+          role: "Giám đốc Công nghệ",
+          bio: "Phụ trách định hướng kỹ thuật và nền tảng đám mây.",
+        },
+        {
+          name: "Phạm Văn C",
+          role: "Giám đốc Nhân sự",
+          bio: "Xây dựng văn hoá và phát triển đội ngũ.",
+        },
+      ],
+    },
+    {
+      __component: "blocks.timeline",
+      heading: "Hành trình phát triển",
+      events: [
+        {
+          date: "2004",
+          title: "Thành lập",
+          description: "VNG được thành lập, khởi đầu với dịch vụ trò chơi trực tuyến.",
+        },
+        { date: "2012", title: "Ra mắt Zalo", description: "Nền tảng nhắn tin Zalo ra mắt." },
+        {
+          date: "2023",
+          title: "Mở rộng điện toán đám mây",
+          description: "Đầu tư mạnh vào hạ tầng cloud cho doanh nghiệp.",
+        },
+      ],
+    },
+    {
+      __component: "blocks.logo-cloud",
+      heading: "Nền tảng & thương hiệu",
+      logos: [
+        { name: "Zalo", url: "https://zalo.me" },
+        { name: "ZaloPay", url: "https://zalopay.vn" },
+        { name: "Zing MP3", url: "https://zingmp3.vn" },
+      ],
+    },
+    {
+      __component: "blocks.testimonial",
+      heading: "Khách hàng nói gì về chúng tôi",
+      items: [
+        {
+          quote: "Nền tảng cloud của VNG giúp chúng tôi mở rộng nhanh chóng.",
+          authorName: "Nguyễn Thị D",
+          authorRole: "CTO",
+          company: "Công ty ABC",
+        },
+        {
+          quote: "Đội ngũ hỗ trợ chuyên nghiệp và tận tâm.",
+          authorName: "Lê Văn E",
+          authorRole: "Giám đốc vận hành",
+          company: "Công ty XYZ",
+        },
+      ],
+    },
+    {
+      __component: "blocks.faq",
+      heading: "Câu hỏi thường gặp",
+      items: [
+        {
+          question: "VNG hoạt động trong lĩnh vực nào?",
+          answer: "VNG hoạt động trong game, nền tảng số (Zalo) và điện toán đám mây.",
+        },
+        {
+          question: "Làm sao để ứng tuyển vào VNG?",
+          answer: "Xem các vị trí đang tuyển tại trang Tuyển dụng.",
+        },
+      ],
+    },
+    {
+      __component: "blocks.embed",
+      title: "Trụ sở VNG",
+      url: "https://www.google.com/maps?q=VNG+Corporation,+Ho+Chi+Minh+City&output=embed",
+      aspectRatio: "16:9",
+    },
+    {
+      __component: "blocks.contact-form",
+      heading: "Liên hệ với chúng tôi",
+      description: "Gửi câu hỏi hoặc góp ý cho đội ngũ VNG.",
+      submitLabel: "Gửi",
+      successMessage: "Cảm ơn bạn đã liên hệ!",
+      fields: [
+        { name: "fullName", label: "Họ và tên", type: "text", required: true },
+        { name: "email", label: "Email", type: "email", required: true },
+        {
+          name: "topic",
+          label: "Chủ đề",
+          type: "select",
+          required: false,
+          options: "Hợp tác, Tuyển dụng, Khác",
+        },
+        { name: "message", label: "Nội dung", type: "textarea", required: true },
+        {
+          name: "subscribe",
+          label: "Đăng ký nhận bản tin",
+          type: "checkbox",
+          required: false,
+        },
+      ],
+    },
+  ];
+  const aboutBlocksEn = [
+    {
+      __component: "blocks.hero",
+      heading: "About VNG",
+      subheading: "Building technology for a better life.",
+      eyebrow: "Overview",
+      background: "default",
+      alignment: "left",
+      actions: [{ label: "See open roles", href: "/careers", variant: "outline" }],
+    },
+    {
+      __component: "blocks.leadership-grid",
+      heading: "Leadership team",
+      leaders: [
+        {
+          name: "Nguyen Van A",
+          role: "Chairman & CEO",
+          bio: "Leads VNG's technology growth strategy.",
+        },
+        {
+          name: "Tran Thi B",
+          role: "Chief Technology Officer",
+          bio: "Oversees engineering direction and the cloud platform.",
+        },
+        { name: "Pham Van C", role: "Head of People", bio: "Builds culture and grows the team." },
+      ],
+    },
+    {
+      __component: "blocks.timeline",
+      heading: "Our journey",
+      events: [
+        {
+          date: "2004",
+          title: "Founded",
+          description: "VNG was founded, starting with online game services.",
+        },
+        {
+          date: "2012",
+          title: "Zalo launches",
+          description: "The Zalo messaging platform officially launches.",
+        },
+        {
+          date: "2023",
+          title: "Cloud expansion",
+          description: "Heavy investment in enterprise cloud infrastructure.",
+        },
+      ],
+    },
+    {
+      __component: "blocks.logo-cloud",
+      heading: "Platforms & brands",
+      logos: [
+        { name: "Zalo", url: "https://zalo.me" },
+        { name: "ZaloPay", url: "https://zalopay.vn" },
+        { name: "Zing MP3", url: "https://zingmp3.vn" },
+      ],
+    },
+    {
+      __component: "blocks.testimonial",
+      heading: "What our customers say",
+      items: [
+        {
+          quote: "VNG's cloud platform helped us scale quickly.",
+          authorName: "Nguyen Thi D",
+          authorRole: "CTO",
+          company: "ABC Company",
+        },
+        {
+          quote: "A professional and dedicated support team.",
+          authorName: "Le Van E",
+          authorRole: "Operations Director",
+          company: "XYZ Company",
+        },
+      ],
+    },
+    {
+      __component: "blocks.faq",
+      heading: "Frequently asked questions",
+      items: [
+        {
+          question: "What does VNG do?",
+          answer: "VNG operates in gaming, digital platforms (Zalo), and cloud computing.",
+        },
+        {
+          question: "How do I apply to VNG?",
+          answer: "Check open roles on the Careers page.",
+        },
+      ],
+    },
+    {
+      __component: "blocks.embed",
+      title: "VNG headquarters",
+      url: "https://www.google.com/maps?q=VNG+Corporation,+Ho+Chi+Minh+City&output=embed",
+      aspectRatio: "16:9",
+    },
+    {
+      __component: "blocks.contact-form",
+      heading: "Contact us",
+      description: "Send a question or feedback to the VNG team.",
+      submitLabel: "Send",
+      successMessage: "Thanks for reaching out!",
+      fields: [
+        { name: "fullName", label: "Full name", type: "text", required: true },
+        { name: "email", label: "Email", type: "email", required: true },
+        {
+          name: "topic",
+          label: "Topic",
+          type: "select",
+          required: false,
+          options: "Partnership, Careers, Other",
+        },
+        { name: "message", label: "Message", type: "textarea", required: true },
+        {
+          name: "subscribe",
+          label: "Subscribe to newsletter",
+          type: "checkbox",
+          required: false,
+        },
+      ],
+    },
+  ];
+
+  const aboutPage = await docs(strapi, "api::page.page").create({
+    data: {
+      title: "Về VNG",
+      slug: "about",
+      blocks: aboutBlocksVi,
+      seo: {
+        metaTitle: "Về VNG",
+        metaDescription: "Tìm hiểu về đội ngũ, hành trình và đối tác của VNG.",
+        noindex: false,
+      },
+    },
+    locale: "vi",
+  });
+  await docs(strapi, "api::page.page").update({
+    documentId: aboutPage.documentId,
+    locale: "en",
+    data: {
+      title: "About VNG",
+      slug: "about",
+      blocks: aboutBlocksEn,
+      seo: {
+        metaTitle: "About VNG",
+        metaDescription: "Learn about VNG's team, history, and partners.",
+        noindex: false,
+      },
+    },
+  });
+  await publish(strapi, "api::page.page", aboutPage.documentId, "vi");
+  await publish(strapi, "api::page.page", aboutPage.documentId, "en");
 
   // --- Navigation (header + footer; slug shared across locales) ------------
   const navDefs = [

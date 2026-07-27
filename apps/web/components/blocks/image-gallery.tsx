@@ -4,24 +4,28 @@ import { resolveMediaUrl } from "@/lib/media";
 
 export function ImageGallery(block: ImageGalleryBlock) {
   return (
-    <section className="vng-section">
-      <div className="vng-container">
-        {block.title && <h2>{block.title}</h2>}
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        {block.title && (
+          <h2 className="mb-8 text-display-sm font-bold text-balance">{block.title}</h2>
+        )}
         <div
-          className="vng-grid"
+          className="grid gap-4"
           style={{ gridTemplateColumns: `repeat(${block.columns}, minmax(0, 1fr))` }}
         >
           {block.images.map((item) => (
-            <figure key={item.id} style={{ margin: 0 }}>
-              <Image
-                src={resolveMediaUrl(item.image.url)}
-                alt={item.alt ?? item.caption ?? ""}
-                width={item.image.width ?? 640}
-                height={item.image.height ?? 480}
-                style={{ width: "100%", height: "auto", borderRadius: "0.5rem" }}
-              />
+            <figure key={item.id} className="m-0">
+              <div className="relative aspect-4/3 overflow-hidden rounded-lg bg-muted">
+                <Image
+                  src={resolveMediaUrl(item.image.url)}
+                  alt={item.alt ?? item.caption ?? ""}
+                  fill
+                  sizes={`(max-width: 768px) 100vw, ${Math.round(100 / block.columns)}vw`}
+                  className="object-cover"
+                />
+              </div>
               {item.caption && (
-                <figcaption style={{ opacity: 0.7, fontSize: "0.85rem", marginTop: "0.375rem" }}>
+                <figcaption className="mt-1.5 text-sm text-muted-foreground">
                   {item.caption}
                 </figcaption>
               )}

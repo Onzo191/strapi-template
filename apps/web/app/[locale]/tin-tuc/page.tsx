@@ -1,7 +1,8 @@
 import type { Locale } from "@vng/shared";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ArticleCardView } from "@/components/article/article-card";
+import { Suspense } from "react";
+import { ArticleGrid, ArticleGridSkeleton } from "@/components/article/article-grid";
 import { Pagination } from "@/components/pagination";
 import { buildMetadata } from "@/lib/seo";
 import { strapi } from "@/lib/strapi";
@@ -14,7 +15,27 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "articles" });
   // Fixed list route — path shared across locales, so no `toPath`.
-  return buildMetadata(null, { title: t("title") }, { locale, path: "/tin-tuc" });
+  return buildMetadata(
+    null,
+    { title: t("title"), description: t("description") },
+    { locale, path: "/tin-tuc" },
+  );
+}
+
+/** The grid + pagination is its own streaming boundary — the page shell (h1) flushes immediately. */
+async function ArticleListResults({ locale, page }: { locale: Locale; page: number }) {
+  const t = await getTranslations("articles");
+  const { data, meta } = await strapi.getArticles({ locale, page, pageSize: 12 });
+  return (
+    <>
+      <ArticleGrid articles={data} emptyMessage={t("empty")} />
+      <Pagination
+        basePath="/tin-tuc"
+        page={meta.pagination.page}
+        pageCount={meta.pagination.pageCount}
+      />
+    </>
+  );
 }
 
 export default async function ArticleListPage({
@@ -31,29 +52,16 @@ export default async function ArticleListPage({
   const page = Number(pageParam ?? "1") || 1;
 
   const t = await getTranslations("articles");
-  const { data, meta } = await strapi.getArticles({ locale, page, pageSize: 12 });
 
   return (
-    <div className="vng-section">
-      <div className="vng-container">
-        <h1>{t("title")}</h1>
-        {data.length === 0 ? (
-          <p>{t("empty")}</p>
-        ) : (
-          <div
-            className="vng-grid"
-            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(16rem, 1fr))" }}
-          >
-            {data.map((article) => (
-              <ArticleCardView key={article.id} article={article} />
-            ))}
-          </div>
-        )}
-        <Pagination
-          basePath="/tin-tuc"
-          page={meta.pagination.page}
-          pageCount={meta.pagination.pageCount}
-        />
+    <div className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <h1 className="text-display-sm font-bold text-balance">{t("title")}</h1>
+        <div className="mt-10">
+          <Suspense key={page} fallback={<ArticleGridSkeleton />}>
+            <ArticleListResults locale={locale} page={page} />
+          </Suspense>
+        </div>
       </div>
     </div>
   );

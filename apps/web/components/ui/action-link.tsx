@@ -1,17 +1,24 @@
+import { buttonVariants, cn } from "@vng/design-system";
 import type { LinkComponent } from "@vng/shared";
+import { ExternalLink } from "lucide-react";
 import { SmartLink } from "./smart-link";
 
-const VARIANT_CLASS: Record<LinkComponent["variant"], string> = {
-  primary: "vng-button vng-button--primary",
-  secondary: "vng-button vng-button--secondary",
-  outline: "vng-button vng-button--outline",
-  link: "vng-button vng-button--link",
+const VARIANT: Record<LinkComponent["variant"], "default" | "secondary" | "outline" | "link"> = {
+  primary: "default",
+  secondary: "secondary",
+  outline: "outline",
+  link: "link",
 };
 
 export function ActionLink({ action }: { action: LinkComponent }) {
   return (
-    <SmartLink href={action.href} target={action.target} className={VARIANT_CLASS[action.variant]}>
+    <SmartLink
+      href={action.href}
+      target={action.target}
+      className={cn(buttonVariants({ variant: VARIANT[action.variant] }))}
+    >
       {action.label}
+      {action.target === "_blank" && <ExternalLink aria-hidden="true" />}
     </SmartLink>
   );
 }

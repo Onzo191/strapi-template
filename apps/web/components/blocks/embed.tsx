@@ -1,9 +1,10 @@
+import { cn } from "@vng/design-system";
 import type { EmbedBlock } from "@vng/shared";
 
-const ASPECT_RATIO: Record<EmbedBlock["aspectRatio"], string> = {
-  "16:9": "16 / 9",
-  "4:3": "4 / 3",
-  "1:1": "1 / 1",
+const ASPECT_CLASS: Record<EmbedBlock["aspectRatio"], string> = {
+  "16:9": "aspect-video",
+  "4:3": "aspect-4/3",
+  "1:1": "aspect-square",
 };
 
 /**
@@ -12,23 +13,23 @@ const ASPECT_RATIO: Record<EmbedBlock["aspectRatio"], string> = {
  * HTML and is intentionally never injected via `dangerouslySetInnerHTML`.
  */
 export function Embed(block: EmbedBlock) {
-  const wrapperStyle = block.height
-    ? { height: `${block.height}px` }
-    : { aspectRatio: ASPECT_RATIO[block.aspectRatio] };
-
   return (
-    <section className="vng-section">
-      <div className="vng-container">
-        {block.title && <h2>{block.title}</h2>}
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        {block.title && <h2 className="mb-4 text-2xl font-semibold">{block.title}</h2>}
         <div
-          style={{ ...wrapperStyle, width: "100%", overflow: "hidden", borderRadius: "0.75rem" }}
+          className={cn(
+            "w-full overflow-hidden rounded-xl bg-muted",
+            !block.height && ASPECT_CLASS[block.aspectRatio],
+          )}
+          style={block.height ? { height: block.height } : undefined}
         >
           {block.url && (
             <iframe
               src={block.url}
               title={block.title ?? "Embedded content"}
               loading="lazy"
-              style={{ width: "100%", height: "100%", border: 0 }}
+              className="size-full border-0"
               allowFullScreen
             />
           )}

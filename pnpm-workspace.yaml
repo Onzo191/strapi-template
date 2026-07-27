@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "qa"
 
 # pnpm 10 blocks dependency build/postinstall scripts by default.
 # These packages must be allowed to run their install scripts, otherwise
@@ -14,3 +15,4 @@ onlyBuiltDependencies:
   - "@parcel/watcher"
   - unrs-resolver
   - core-js
+  - playwright

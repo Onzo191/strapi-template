@@ -11,6 +11,11 @@ build/
 out/
 coverage/
 
+# QA (Playwright + Lighthouse CI reports)
+qa/playwright-report/
+qa/test-results/
+qa/.lighthouseci/
+
 # Strapi runtime
 apps/cms/.tmp/
 apps/cms/.cache/

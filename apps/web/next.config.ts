@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
   cacheHandler: join(process.cwd(), "cache-handler.mjs"),
   cacheMaxMemorySize: 0,
   images: {
+    // Explicit rather than relying on Next's default — §6.4 calls for AVIF/WebP.
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: strapiHost.protocol.replace(":", "") as "http" | "https",

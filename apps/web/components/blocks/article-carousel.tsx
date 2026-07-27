@@ -23,16 +23,20 @@ export async function ArticleCarousel(block: ArticleCarouselBlock) {
   if (picks.length === 0) return null;
 
   return (
-    <section className="vng-section">
-      <div className="vng-container">
-        {block.heading && <h2>{block.heading}</h2>}
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-3xl px-6">
+        {block.heading && (
+          <h2 className="mb-4 text-display-sm font-bold text-balance">{block.heading}</h2>
+        )}
+        <ul className="m-0 list-none divide-y divide-border p-0">
           {picks.map((pick) => (
-            <li
-              key={pick.id}
-              style={{ padding: "0.75rem 0", borderBottom: "1px solid var(--vng-border)" }}
-            >
-              <Link href={`/tin-tuc/${pick.slug}`}>{pick.title}</Link>
+            <li key={pick.id} className="py-3">
+              <Link
+                href={`/tin-tuc/${pick.slug}`}
+                className="font-medium hover:text-primary hover:underline"
+              >
+                {pick.title}
+              </Link>
             </li>
           ))}
         </ul>
@@ -50,14 +54,14 @@ function ArticleCarouselView({
 }) {
   if (articles.length === 0) return null;
   return (
-    <section className="vng-section">
-      <div className="vng-container">
-        {heading && <h2>{heading}</h2>}
-        <div
-          className="vng-grid"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(16rem, 1fr))" }}
-        >
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        {heading && <h2 className="mb-8 text-display-sm font-bold text-balance">{heading}</h2>}
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-6">
           {articles.map((article) => (
+            // No `priority` here: this block usually sits below a page's own Hero image,
+            // which already claims the LCP slot — see the dedicated list pages for where
+            // the first card genuinely is the LCP candidate.
             <ArticleCardView key={article.id} article={article} />
           ))}
         </div>

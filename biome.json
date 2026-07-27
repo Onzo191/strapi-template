@@ -15,5 +15,13 @@
       "!docs",
       "!**/*.md"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.css"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false },
+      "css": { "parser": { "tailwindDirectives": true } }
+    }
+  ]
 }

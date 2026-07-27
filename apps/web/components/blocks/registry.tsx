@@ -1,6 +1,8 @@
+import { Reveal, Skeleton } from "@vng/design-system";
 import type { Block, BlockComponent } from "@vng/shared";
 import { zBlock } from "@vng/shared";
 import type { ComponentType } from "react";
+import { Suspense } from "react";
 import { ArticleCarousel } from "./article-carousel";
 import { ContactForm } from "./contact-form";
 import { Cta } from "./cta";
@@ -42,11 +44,28 @@ const registry: BlockRegistry = {
   "blocks.contact-form": ContactForm,
 };
 
+const SKELETON_KEYS = ["a", "b", "c"] as const;
+
+function ArticleGridSkeleton() {
+  return (
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <Skeleton className="mb-8 h-9 w-64" />
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-6">
+          {SKELETON_KEYS.map((key) => (
+            <Skeleton key={key} className="h-64" />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** Renders a page-builder dynamic zone. Malformed entries are validated out, not crashed on. */
 export function BlockRenderer({ blocks }: { blocks: unknown[] }) {
   return (
     <>
-      {blocks.map((raw) => {
+      {blocks.map((raw, index) => {
         const parsed = zBlock.safeParse(raw);
         if (!parsed.success) {
           if (process.env.NODE_ENV !== "production") {
@@ -59,9 +78,27 @@ export function BlockRenderer({ blocks }: { blocks: unknown[] }) {
         // Indexing by the runtime-narrowed discriminant can't be proven exhaustive by
         // TS at this call site — the per-key typing above is what keeps this honest.
         const Component = registry[block.__component] as ComponentType<typeof block>;
+        // The auto-pull carousel does its own Strapi fetch — a genuine streaming
+        // boundary (§5.3/§7). Every other block just renders already-resolved props,
+        // so wrapping it in Suspense would add a boundary with nothing to stream.
+        const rendered =
+          block.__component === "blocks.article-carousel" ? (
+            <Suspense fallback={<ArticleGridSkeleton />}>
+              <Component {...block} />
+            </Suspense>
+          ) : (
+            <Component {...block} />
+          );
+
         // `block.id` is Strapi's own per-zone-entry component id — stable and unique
-        // within this dynamic zone, so no array index is needed in the key.
-        return <Component key={`${block.__component}-${block.id}`} {...block} />;
+        // within this dynamic zone, so no array index is needed in the key. The very
+        // first block on a page is never animated — it's above-the-fold content, and
+        // an entrance animation there risks CLS/LCP.
+        return (
+          <Reveal key={`${block.__component}-${block.id}`} disabled={index === 0}>
+            {rendered}
+          </Reveal>
+        );
       })}
     </>
   );

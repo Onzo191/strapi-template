@@ -1,227 +1,35 @@
-/**
- * Minimal reset + layout primitives. The real design-system (tokens, shadcn
- * components, themes) lands in P5 — this is just enough structure to render
- * the P1 block library legibly.
- */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../../../packages/design-system/src/styles/tokens.css";
 
-:root {
-  color-scheme: light;
-  --vng-fg: #14151a;
-  --vng-bg: #ffffff;
-  --vng-muted-bg: #f4f5f7;
-  --vng-border: #e2e4e9;
-  --vng-accent: #0f62fe;
-  --vng-dark-bg: #14151a;
-  --vng-dark-fg: #f4f5f7;
-}
+/* Tailwind v4's auto content-detection scans from this file's own directory
+ * downward — it won't reach sideways into a sibling workspace package, so
+ * `@vng/design-system` component classes need an explicit source. */
+@source "../../../packages/design-system/src";
 
 * {
-  box-sizing: border-box;
+  border-color: var(--color-border);
 }
 
-html,
-body {
-  padding: 0;
-  margin: 0;
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
-  color: var(--vng-fg);
-  background: var(--vng-bg);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-a {
-  color: inherit;
-}
-
-img {
+img,
+video {
   max-width: 100%;
   height: auto;
   display: block;
-}
-
-.vng-container {
-  width: 100%;
-  max-width: 72rem;
-  margin-inline: auto;
-  padding-inline: 1.5rem;
-}
-
-.vng-section {
-  padding-block: 3rem;
-}
-
-.vng-section--muted {
-  background: var(--vng-muted-bg);
-}
-
-.vng-section--dark {
-  background: var(--vng-dark-bg);
-  color: var(--vng-dark-fg);
-}
-
-.vng-section--gradient {
-  background: linear-gradient(135deg, var(--vng-accent), var(--vng-dark-bg));
-  color: var(--vng-dark-fg);
-}
-
-.vng-grid {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.vng-prose {
-  max-width: 42rem;
-}
-
-.vng-prose p {
-  margin: 0 0 1rem;
-}
-
-.vng-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  border-radius: 999px;
-  font-weight: 600;
-  text-decoration: none;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-
-.vng-button--primary {
-  background: var(--vng-accent);
-  color: #fff;
-}
-
-.vng-button--secondary {
-  background: var(--vng-fg);
-  color: #fff;
-}
-
-.vng-button--outline {
-  background: transparent;
-  border-color: currentColor;
-}
-
-.vng-button--link {
-  padding: 0;
-  border-radius: 0;
-  text-decoration: underline;
-}
-
-.vng-card {
-  border: 1px solid var(--vng-border);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: var(--vng-bg);
-  color: var(--vng-fg);
-}
-
-.vng-eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.8rem;
-  font-weight: 600;
-  opacity: 0.7;
-}
-
-.vng-header {
-  border-bottom: 1px solid var(--vng-border);
-  position: sticky;
-  top: 0;
-  background: var(--vng-bg);
-  z-index: 10;
-}
-
-.vng-header__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding-block: 1rem;
-}
-
-.vng-nav {
-  display: flex;
-  gap: 1.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.vng-nav-item {
-  position: relative;
-}
-
-.vng-nav-item__label {
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.vng-nav-item__dropdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 12rem;
-  padding: 0.5rem;
-  margin: 0;
-  list-style: none;
-  background: var(--vng-bg);
-  border: 1px solid var(--vng-border);
-  border-radius: 0.5rem;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
-}
-
-.vng-nav-item:hover .vng-nav-item__dropdown,
-.vng-nav-item:focus-within .vng-nav-item__dropdown {
-  display: block;
-}
-
-.vng-nav-item__dropdown li a {
-  display: block;
-  padding: 0.5rem 0.625rem;
-  text-decoration: none;
-  border-radius: 0.375rem;
-}
-
-.vng-nav-item__dropdown li a:hover {
-  background: var(--vng-muted-bg);
-}
-
-.vng-locale-switcher {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.vng-locale-switcher a {
-  text-transform: uppercase;
-  text-decoration: none;
-  opacity: 0.6;
-}
-
-.vng-locale-switcher a[aria-current="true"] {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-.vng-footer {
-  border-top: 1px solid var(--vng-border);
-  margin-top: 3rem;
-}
-
-.vng-footer__bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2rem;
-  justify-content: space-between;
-  padding-block: 2rem;
-  opacity: 0.8;
-  font-size: 0.9rem;
 }

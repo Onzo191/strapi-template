@@ -1,3 +1,4 @@
+import { badgeVariants } from "@vng/design-system";
 import type { Locale } from "@vng/shared";
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
@@ -73,17 +74,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const jsonLd = [newsArticleSchema(article, { url, global, locale }), breadcrumbSchema(crumbs)];
 
   return (
-    <article className="vng-section">
-      <div className="vng-container" style={{ maxWidth: "48rem" }}>
+    <article className="py-16 md:py-24">
+      <div className="mx-auto max-w-3xl px-6">
         {article.category && (
-          <Link href={`/category/${article.category.slug}`} className="vng-eyebrow">
+          <Link
+            href={`/category/${article.category.slug}`}
+            className={badgeVariants({ variant: "default" })}
+          >
             {article.category.name}
           </Link>
         )}
-        <h1 style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", marginTop: "0.5rem" }}>
-          {article.title}
-        </h1>
-        <div style={{ display: "flex", gap: "0.75rem", opacity: 0.7, fontSize: "0.9rem" }}>
+        <h1 className="mt-2 text-display-sm font-bold text-balance">{article.title}</h1>
+        <div className="mt-3 flex gap-3 text-sm text-muted-foreground">
           {article.author && (
             <span>
               {t("by")} {article.author.name}
@@ -103,20 +105,20 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             width={article.cover.width ?? 1200}
             height={article.cover.height ?? 675}
             priority
-            style={{ width: "100%", height: "auto", borderRadius: "0.75rem", margin: "1.5rem 0" }}
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="my-8 w-full rounded-xl"
           />
         )}
 
         {article.body && <RichText content={article.body} />}
 
         {article.tags && article.tags.length > 0 && (
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "2rem" }}>
+          <div className="mt-8 flex flex-wrap gap-2">
             {article.tags.map((tag) => (
               <Link
                 key={tag.id}
                 href={`/tag/${tag.slug}`}
-                className="vng-button vng-button--outline"
-                style={{ fontSize: "0.8rem", padding: "0.375rem 0.875rem" }}
+                className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 #{tag.name}
               </Link>

@@ -9,6 +9,7 @@
   },
   "articles": {
     "title": "Tin tức",
+    "description": "Tin tức, sự kiện và cập nhật mới nhất từ VNG.",
     "empty": "Chưa có bài viết nào.",
     "by": "bởi",
     "category": "Chuyên mục",
@@ -18,6 +19,7 @@
     "title": "Chuyên mục: {name}"
   },
   "tag": {
-    "title": "Thẻ: {name}"
+    "title": "Thẻ: {name}",
+    "description": "Các bài viết được gắn thẻ {name} tại VNG."
   }
 }

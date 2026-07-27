@@ -1,5 +1,7 @@
+import { ThemeProvider } from "@vng/design-system";
 import type { Locale } from "@vng/shared";
 import type { Metadata } from "next";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -11,6 +13,17 @@ import { loadResilient } from "@/lib/prerender";
 import { siteUrl } from "@/lib/site";
 import { strapi } from "@/lib/strapi";
 import "../globals.css";
+
+// Self-hosted (Next downloads + serves the font files itself, no runtime
+// Google requests) with a native `vietnamese` subset — satisfies §6.4
+// without a manual subsetting pipeline.
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["vietnamese", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
+  variable: "--font-be-vietnam-pro",
+});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -57,13 +70,15 @@ export default async function LocaleLayout({
   );
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className={beVietnamPro.variable} suppressHydrationWarning>
       <body>
-        <NextIntlClientProvider messages={messages}>
-          <Header navigation={header} global={global} />
-          <main>{children}</main>
-          <Footer navigation={footer} global={global} />
-        </NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider messages={messages}>
+            <Header navigation={header} global={global} />
+            <main>{children}</main>
+            <Footer navigation={footer} global={global} />
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

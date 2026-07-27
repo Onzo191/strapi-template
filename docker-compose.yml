@@ -58,6 +58,10 @@ services:
       DATABASE_USERNAME: vng
       DATABASE_PASSWORD: vng
       DATABASE_SSL: "false"
+      # Demo content (P1 seed) on first boot of an empty DB — see
+      # apps/cms/src/bootstrap/seed.ts. Safe to leave on: it no-ops once any
+      # article exists.
+      SEED: "true"
       # P3 revalidation webhook (§5.3). The CMS signs with REVALIDATE_SECRET
       # and POSTs to a SINGLE web instance (`web`). The Redis-backed cache
       # handler then propagates the invalidation to `web2` too — this is the

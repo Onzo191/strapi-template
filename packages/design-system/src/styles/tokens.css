@@ -1,0 +1,119 @@
+/**
+ * Design tokens (§6.1) — solid-minimalism: high-contrast, spacious. Three
+ * themes share one semantic token set (shadcn's own naming) so every
+ * component/block just uses `bg-background`, `text-foreground`, etc. and
+ * never branches on theme itself. `next-themes` toggles `[data-theme]` on
+ * `<html>`; the `dark:` variant below is redefined to match that attribute
+ * instead of Tailwind's default `.dark` class strategy.
+ */
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
+
+  /* Extra display sizes for hero/section headings — the rest of the type
+     scale is Tailwind's default. */
+  --text-display: clamp(2.25rem, 1.4rem + 3.5vw, 3.75rem);
+  --text-display--line-height: 1.05;
+  --text-display-sm: clamp(1.75rem, 1.35rem + 1.8vw, 2.5rem);
+  --text-display-sm--line-height: 1.15;
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #14151a;
+  --card: #ffffff;
+  --card-foreground: #14151a;
+  --popover: #ffffff;
+  --popover-foreground: #14151a;
+  --primary: #0f62fe;
+  --primary-foreground: #ffffff;
+  --secondary: #14151a;
+  --secondary-foreground: #ffffff;
+  --muted: #f4f5f7;
+  --muted-foreground: #5b5f6a;
+  --accent: #eaf1ff;
+  --accent-foreground: #0f62fe;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e2e4e9;
+  --input: #e2e4e9;
+  --ring: #0f62fe;
+  --radius: 0.75rem;
+}
+
+[data-theme="dark"] {
+  --background: #0a0a0c;
+  --foreground: #f4f5f7;
+  --card: #16171c;
+  --card-foreground: #f4f5f7;
+  --popover: #16171c;
+  --popover-foreground: #f4f5f7;
+  /* #2563eb (not the lighter #3b82f6) — white button text on #3b82f6 only hits
+     3.67:1, below WCAG AA's 4.5:1 for normal text. This darker blue clears it
+     (~5.2:1) while staying in the same hue family as the light theme's primary. */
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #24262c;
+  --secondary-foreground: #f4f5f7;
+  --muted: #1c1d22;
+  --muted-foreground: #9a9ea8;
+  --accent: #1c2733;
+  --accent-foreground: #7cb0ff;
+  --destructive: #f87171;
+  --destructive-foreground: #1a0505;
+  --border: #26272c;
+  --input: #26272c;
+  --ring: #2563eb;
+}
+
+/* High-contrast light theme — WCAG AAA text contrast, thicker focus ring.
+   A deliberate a11y-oriented third theme, not just a decorative variant. */
+[data-theme="contrast"] {
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #0a3fc4;
+  --primary-foreground: #ffffff;
+  --secondary: #000000;
+  --secondary-foreground: #ffffff;
+  --muted: #e5e5e5;
+  --muted-foreground: #1a1a1a;
+  --accent: #d6e4ff;
+  --accent-foreground: #0a3fc4;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+  --border: #1a1a1a;
+  --input: #1a1a1a;
+  --ring: #000000;
+  --radius: 0.75rem;
+}

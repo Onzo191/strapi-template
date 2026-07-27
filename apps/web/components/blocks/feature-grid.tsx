@@ -1,31 +1,39 @@
+import { Card, CardContent, CardDescription, CardTitle } from "@vng/design-system";
 import type { FeatureGridBlock } from "@vng/shared";
 import { SmartLink } from "@/components/ui/smart-link";
 
 export function FeatureGrid(block: FeatureGridBlock) {
   return (
-    <section className="vng-section">
-      <div className="vng-container">
-        {block.heading && <h2>{block.heading}</h2>}
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        {block.heading && (
+          <h2 className="text-display-sm font-bold text-balance">{block.heading}</h2>
+        )}
         {block.description && (
-          <p style={{ opacity: 0.8, maxWidth: "42rem" }}>{block.description}</p>
+          <p className="mt-3 max-w-2xl text-muted-foreground">{block.description}</p>
         )}
         <div
-          className="vng-grid"
-          style={{
-            gridTemplateColumns: `repeat(${block.columns}, minmax(0, 1fr))`,
-            marginTop: "1.5rem",
-          }}
+          className="mt-10 grid gap-6"
+          // `columns` is CMS-driven at runtime, so Tailwind can't statically generate a
+          // `grid-cols-N` class for it — this is a genuine dynamic value, not a shortcut.
+          style={{ gridTemplateColumns: `repeat(${block.columns}, minmax(0, 1fr))` }}
         >
           {block.features.map((feature) => (
-            <div key={feature.id} className="vng-card" style={{ padding: "1.5rem" }}>
-              <h3 style={{ marginTop: 0 }}>{feature.title}</h3>
-              {feature.description && <p style={{ opacity: 0.75 }}>{feature.description}</p>}
-              {feature.link && (
-                <SmartLink href={feature.link.href} target={feature.link.target}>
-                  {feature.link.label}
-                </SmartLink>
-              )}
-            </div>
+            <Card key={feature.id}>
+              <CardContent className="flex flex-col gap-2 pt-6">
+                <CardTitle>{feature.title}</CardTitle>
+                {feature.description && <CardDescription>{feature.description}</CardDescription>}
+                {feature.link && (
+                  <SmartLink
+                    href={feature.link.href}
+                    target={feature.link.target}
+                    className="mt-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                  >
+                    {feature.link.label}
+                  </SmartLink>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
