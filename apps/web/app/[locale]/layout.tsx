@@ -16,10 +16,13 @@ import "../globals.css";
 
 // Self-hosted (Next downloads + serves the font files itself, no runtime
 // Google requests) with a native `vietnamese` subset — satisfies §6.4
-// without a manual subsetting pipeline.
+// without a manual subsetting pipeline. Three weights (400 body, 600
+// medium/heading, 700 hero) keep the preloaded critical-path bytes down —
+// the LCP element is heading text, so fewer competing font files on a
+// throttled link lets it swap-repaint sooner.
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["vietnamese", "latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600", "700"],
   display: "swap",
   preload: true,
   variable: "--font-be-vietnam-pro",

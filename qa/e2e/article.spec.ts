@@ -3,10 +3,10 @@ import { expect, test } from "@playwright/test";
 test("article list links through to a detail page", async ({ page }) => {
   await page.goto("/vi/tin-tuc");
 
-  // `.group` is the article card's own marker class (see article-card.tsx) — robust to
-  // whether its title renders as `h2` (list pages) or `h3` (nested under a block heading).
-  const firstCard = page.locator("a.group").first();
-  const title = await firstCard.locator("h2, h3").innerText();
+  // Scope to a card link that actually contains a heading — the header nav links also carry
+  // a `group` class (navigationMenuTriggerStyle), so a bare `a.group` would match those first.
+  const firstCard = page.locator("main a:has(h2)").first();
+  const title = await firstCard.locator("h2").innerText();
   await firstCard.click();
 
   await expect(page).toHaveURL(/\/vi\/tin-tuc\/.+/);
