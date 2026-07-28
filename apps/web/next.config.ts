@@ -8,8 +8,17 @@ const withNextIntl = createNextIntlPlugin();
 // from STRAPI_URL (local upload provider serves media from the CMS origin
 // itself) plus the CDN host once S3/CloudFront is wired (§8.1) — never a
 // wildcard, which would let the image optimizer proxy arbitrary hosts.
-const strapiHost = new URL(process.env.STRAPI_URL ?? "http://localhost:1337");
-const cdnUrl = process.env.CDN_URL ? new URL(process.env.CDN_URL) : undefined;
+// An env var set to the empty string counts as absent. Docker turns an unset
+// `--build-arg FOO=` into `FOO=""` rather than leaving it undefined, so `??`
+// alone would hand `new URL("")` an empty string and crash the build.
+const envUrl = (name: string): string | undefined => {
+  const raw = process.env[name]?.trim();
+  return raw === "" ? undefined : raw;
+};
+
+const strapiHost = new URL(envUrl("STRAPI_URL") ?? "http://localhost:1337");
+const cdnRaw = envUrl("CDN_URL");
+const cdnUrl = cdnRaw ? new URL(cdnRaw) : undefined;
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

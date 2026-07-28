@@ -32,3 +32,10 @@ relevant one — read it only when the skill tells you to.
 - Server Components by default; add `"use client"` only when a component needs
   interactivity or browser APIs.
 - Don't commit or push unless asked. Commit style: Conventional Commits (commitlint).
+
+## CI
+
+`.gitlab-ci.yml` builds the `web` and `cms` Docker images (`apps/web/Dockerfile`,
+`apps/cms/Dockerfile`; build context is the repo root). Each build job is gated on
+`rules: changes:` so a push only builds the app(s) actually affected — `packages/**`
+changes build both, since `@vng/shared` and `@vng/design-system` feed both apps.

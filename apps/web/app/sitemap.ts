@@ -2,6 +2,7 @@ import type { Locale, SitemapEntry } from "@vng/shared";
 import type { MetadataRoute } from "next";
 import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { loadResilient } from "@/lib/prerender";
 import { absoluteUrl } from "@/lib/site";
 import { strapi } from "@/lib/strapi";
 
@@ -64,8 +65,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // CMS-backed entries, per locale (each localized URL is its own entry).
+  //
+  // Through `loadResilient` like every other CMS-backed route: the image is
+  // built in an isolated container with no Strapi reachable, and a sitemap that
+  // hard-fails the build would make the *code* pipeline depend on the *content*
+  // tier being up. Instead the route opts out of prerendering and generates on
+  // first request, when the CMS is there.
   for (const locale of locales) {
-    const entries = await strapi.getSitemapEntries(locale);
+    const entries = await loadResilient(() => strapi.getSitemapEntries(locale));
     for (const entry of entries) {
       if (entry.noindex) continue;
       const path = pathForKind(entry.kind, entry.slug);

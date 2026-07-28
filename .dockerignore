@@ -11,3 +11,20 @@
 **/*.log
 apps/cms/public/uploads/*
 !apps/cms/public/uploads/.gitkeep
+
+# Local env files must never reach an image. Next loads .env.local during
+# `next build`, so a developer's machine-local values would otherwise be baked
+# into a production bundle. .gitignore does not apply to Docker contexts.
+.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Not part of either runtime image — keeping them out shrinks the build context
+# and stops an infra or docs edit from invalidating the `COPY . .` layer.
+infra
+docs
+.github
+qa/playwright-report
+qa/test-results
+qa/.lighthouseci

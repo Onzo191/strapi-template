@@ -1,0 +1,57 @@
+# =============================================================================
+# CI: build the Docker image for whichever app(s) actually changed.
+#
+#   apps/web/**  → build web only
+#   apps/cms/**  → build cms only
+#   packages/**  → build BOTH — @vng/shared and @vng/design-system are compiled
+#                  into both apps at build time, so a change there can affect
+#                  either side; building only one would let them drift.
+#   anything else (qa/**, docs/**, .gitlab-ci.yml itself, …) → nothing runs
+#
+# Images are built and left in the job's local Docker daemon to prove the
+# Dockerfile is correct — not pushed anywhere. Both Dockerfiles use the repo
+# root as build context (they COPY workspace packages via pnpm), so
+# `docker build` always runs from the top of the repo.
+# =============================================================================
+
+workflow:
+  # Avoids the classic GitLab "duplicate pipeline" trap: without this, both a
+  # branch push AND its merge request would each start a pipeline for the same
+  # commit. This runs exactly one — the MR pipeline when there is one, a normal
+  # branch pipeline otherwise.
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - build
+
+.docker_build:
+  stage: build
+  image: docker:27-cli
+  services:
+    - docker:27-dind
+  variables:
+    # Standard GitLab dind TLS setup — see
+    # https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker info
+
+build:web:
+  extends: .docker_build
+  rules:
+    - changes:
+        - apps/web/**/*
+        - packages/**/*
+  script:
+    - docker build -f apps/web/Dockerfile -t "vng-web:${CI_COMMIT_SHORT_SHA}" .
+
+build:cms:
+  extends: .docker_build
+  rules:
+    - changes:
+        - apps/cms/**/*
+        - packages/**/*
+  script:
+    - docker build -f apps/cms/Dockerfile -t "vng-cms:${CI_COMMIT_SHORT_SHA}" .
