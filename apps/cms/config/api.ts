@@ -5,7 +5,7 @@
  * `GET /api/articles?pagination[pageSize]=100000&populate=*` therefore asks
  * Postgres for the entire catalogue with every relation joined, in one request.
  * With "thousands of articles" (§0 business context) that is a one-line denial
- * of service against RDS that also blows the ISR cache entry size in Redis.
+ * of service against Postgres that also blows the ISR cache entry size.
  *
  * `maxLimit: 100` matches what the FE actually asks for: `getArticles` pages at
  * 12, and `getSitemapEntries` — the largest legitimate consumer — pages at 100

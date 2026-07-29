@@ -58,7 +58,7 @@ before that promise resolves and streams the metadata later, into the body.
 
 ### Ruled out
 
-- **Not the Redis cache handler.** A cache-busted fresh render is byte-identical in head
+- **Not the ISR cache.** A cache-busted fresh render is byte-identical in head
   size and placement, so serialization is not involved.
 - **Not user-agent gating.** `htmlLimitedBots` makes Next block the shell for listed
   crawlers, but these pages are ISR-cached, so one cached HTML is served to everyone —

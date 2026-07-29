@@ -16,8 +16,8 @@ Editor publishes
   → verify signature + replay window
   → map entry → §5.2 cache tags
   → revalidateTag(tag, { expire: 0 })
-  → Redis cache handler stamps the tag  ← this is what makes it cluster-wide
-  → next request on ANY instance regenerates
+  → Next's ISR cache marks the tag stale, in this process
+  → next request regenerates
 ```
 
 ---
@@ -83,8 +83,8 @@ rejects timestamps outside ±5 minutes (`packages/shared/src/security/signature.
 
 Binding the timestamp *into* the signed payload is the point. A bare timestamp header
 the signature didn't cover could simply be rewritten by whoever replays the request,
-and each replay forces a cluster-wide purge plus a full regeneration storm against
-Strapi — an amplified DoS using an entirely authentic message.
+and each replay forces a cache purge plus a full regeneration storm against Strapi —
+an amplified DoS using an entirely authentic message.
 
 Both ends read the header names and the `signingPayload()` helper from
 `@vng/shared`, so they cannot drift apart.
@@ -92,20 +92,26 @@ Both ends read the header names and the `signingPayload()` helper from
 `REVALIDATE_SECRET` must be identical on both sides. Generate with
 `openssl rand -hex 32`.
 
-## Why the Redis cache handler is not optional
+## Why this only works with one web instance
 
-`revalidateTag()` alone marks the tag stale **in the process that ran it**. The
-webhook hits exactly one instance. With Next's default cache, the other instance
-would keep serving the old HTML until its time-based window expired.
+`revalidateTag()` marks the tag stale **in the process that ran it**, and the cache is
+Next's own per-instance ISR cache. The webhook is a single HTTP POST, so it reaches
+exactly one process.
 
-`apps/web/cache-handler.mjs` stores tag-invalidation timestamps in shared Redis, and
-`next.config.ts` sets `cacheMaxMemorySize: 0` so no instance can shadow Redis with a
-local memory copy. This is assumption **A2** in the architecture plan: multi-instance
-from day one, so a shared cache handler is mandatory, not an optimisation.
+With one instance that is exactly right: the process that invalidates is the process
+that serves. Add a second replica and the webhook updates whichever one received it
+while the others keep serving old HTML until their time-based window expires (10 min
+for lists, 1 h for content, 1 d for static). It presents as content flickering between
+old and new depending on which replica answered — a caching mystery that is really
+just per-process state.
 
-`docker compose up` runs **two** web instances against one Redis specifically so this
-is exercised locally. `next dev` bypasses the cache handler entirely — nothing about
-this mechanism can be validated against it.
+So **do not add a web replica** without restoring a shared cache handler first.
+[ADR-008](../../../docs/adr/008-single-instance.md) records the decision and
+[ADR-003](../../../docs/adr/003-redis-cache-handler.md) has the shared-cache design to
+restore, including the tag semantics.
+
+`next dev` does not use the production ISR cache — nothing about this mechanism can be
+validated against it. Use `docker compose up`.
 
 ## Debugging "I published and nothing changed"
 
@@ -138,20 +144,21 @@ Compare the logged tags against the `tags:` argument in the `strapi-client.ts` m
 the page calls. A page that fetched `list:articles` is not invalidated by
 `article:abc123`.
 
-**4. Is Redis reachable?**
+**4. Is more than one web instance running?**
 
 ```bash
-docker compose exec redis redis-cli --scan --pattern 'vng:next:cache:v1:*' | head
-docker compose exec redis redis-cli hgetall vng:next:cache:v1:tags
+docker compose ps web
 ```
 
-An empty `tags` hash after a publish means `revalidateTag` ran but the handler could
-not write — check `docker compose logs web | grep cache-handler`.
+The ISR cache is per-process, so a second replica serves its own stale copy — content
+that flips between old and new on refresh is this, not a tagging bug. Scale back to one
+and re-test; see the section above.
 
-**5. Does the second instance agree?** `curl localhost:3000/vi/tin-tuc` and
-`curl localhost:3001/vi/tin-tuc`. If one is fresh and the other stale, the cache
-handler is not actually shared — check `REDIS_URL` on both, and that
-`cacheMaxMemorySize: 0` is still in `next.config.ts`.
+**5. Is it the fetch, not the cache?** Confirm the page actually re-reads the CMS:
+`docker compose logs cms | grep -c 'GET /api'` before and after a request to the page.
+No new request means the cache entry was served, so the tag never matched (back to
+step 3). New requests but stale output means the CMS itself returned old data — check
+that the entry was really published, not just saved as a draft.
 
 ## Load-testing the path
 
@@ -175,10 +182,13 @@ pnpm --filter @vng/shared build && docker compose up --build
 ```
 
 1. Publish an article in the admin.
-2. Within ~2 s it appears on **both** `localhost:3000` and `localhost:3001`.
-3. **Unpublish** it — it disappears from both. (This is the case a lifecycle hook
-   would have missed.)
+2. Within ~2 s it appears on `localhost:3000` — with no rebuild.
+3. **Unpublish** it — it disappears. (This is the case a lifecycle hook would have
+   missed.)
 4. `docker compose logs web | grep revalidate` shows the expected tag set.
 
+Or run the whole thing: `./scripts/verify-revalidation.sh` (set `ADMIN_EMAIL` +
+`ADMIN_PASSWORD` to include the real publish flow).
+
 Related: `.claude/skills/content-freshness`, `.claude/skills/add-content-type`,
-[docs/adr/003-redis-cache-handler.md](../../docs/adr/003-redis-cache-handler.md).
+[docs/adr/008-single-instance.md](../../docs/adr/008-single-instance.md).

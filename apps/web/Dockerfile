@@ -2,12 +2,14 @@
 # =============================================================================
 # apps/web — Next.js 16 on the **Node runtime**, NOT a static export (§8.1).
 #
-# This distinction is load-bearing for the whole architecture: ISR, the
-# Redis-backed `cacheHandler` (cache-handler.mjs) and the /api/revalidate
-# webhook receiver all require a long-lived Node server. `next export` would
-# delete every one of them and reduce content freshness to "rebuild the site".
-# So: `next build` + `next start`, served by ECS Fargate behind an ALB, with
-# CloudFront in front for HTML/ISR and S3 for immutable static assets.
+# This distinction is load-bearing for the whole architecture: ISR and the
+# /api/revalidate webhook receiver both require a long-lived Node server.
+# `next export` would delete both and reduce content freshness to "rebuild the
+# site". So: `next build` + `next start`.
+#
+# The image runs as a SINGLE instance — the ISR cache is Next's own per-instance
+# cache, so a second replica would serve content the publish webhook never
+# invalidated. See docs/adr/008-single-instance.md before scaling this out.
 #
 # Build context is the REPOSITORY ROOT (see docker-compose.yml and
 # .github/workflows/deploy-app.yml) because pnpm workspace deps
@@ -71,7 +73,7 @@ RUN NEXT_PUBLIC_SITE_URL="${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}" \
     pnpm --filter @vng/web build
 
 # Drop devDependencies from the workspace in place. Everything `next start`
-# needs at runtime (next, react, next-intl, redis) is a prod dependency; the
+# needs at runtime (next, react, next-intl) is a prod dependency; the
 # workspace packages were already compiled into .next.
 #
 # CI=true is required, not cosmetic: pruning rewrites node_modules, and pnpm

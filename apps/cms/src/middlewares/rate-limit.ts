@@ -1,32 +1,42 @@
 /**
  * Request rate limiting for the CMS (P7 §9 "rate limit").
  *
- * Three tiers, because the things being protected fail differently:
+ * Four tiers, because the things being protected fail differently:
  *
  * | Tier      | Matches                                   | Why this budget |
  * |-----------|-------------------------------------------|-----------------|
  * | `auth`    | `/admin/login`, `/admin/register*`, `/admin/forgot-password`, `/admin/reset-password`, `/api/auth/*` | Credential stuffing. Tight (10/5min) — a real editor logs in once. |
  * | `sso`     | `/api/sso/*`                              | OIDC redirects, not credential guessing. Looser (60/5min) so a NAT'd office isn't locked out. |
  * | `write`   | POST/PUT/PATCH/DELETE elsewhere           | Bulk-write / upload abuse, and the cost of the virus scan per upload. |
- * | `read`    | everything else                           | Content-API scraping and the amplification it puts on RDS. |
+ * | `read`    | everything else                           | Content-API scraping and the amplification it puts on Postgres. |
  *
- * ## Cluster-wide, unlike the web app's limiter
+ * ## In-process, and why that is now the right scope
  *
- * This one is **Redis-backed** (the same ElastiCache instance the ISR cache
- * handler uses, under a separate key prefix). With ≥2 Strapi tasks (§A2), a
- * per-instance counter would give an attacker `limit × instances` login attempts
- * and — worse — round-robin them so no single instance ever sees enough failures
- * to trip. For credential stuffing that difference is the whole control.
+ * Counters live in this process's memory — a fixed-window `Map`, no external
+ * store. That is sound because the deployment runs **one CMS instance**
+ * (ADR-008): with a single process, per-instance *is* cluster-wide, so the
+ * simple design and the strong guarantee coincide.
  *
- * If Redis is unreachable the limiter **fails open** and logs. That is a
- * deliberate availability-over-strictness call for a content site: a Redis blip
- * must not lock every editor out of the CMS mid-launch. It is safe because it is
- * not the only login control — bcrypt password hashing, the tightened admin
- * session lifetimes (`config/admin.ts`) and IdP-side MFA (`plugins/sso`) all
- * remain in force. The fail-open is logged at `error` so it is alertable.
+ * This replaced a Redis-backed limiter. The trade that made Redis look necessary
+ * was: with ≥2 instances a per-instance counter gives an attacker
+ * `limit × instances` login attempts, and lets them round-robin so no single
+ * instance ever sees enough failures to trip. That reasoning still holds — so if
+ * the CMS is ever scaled past one instance, this file is the thing to revisit,
+ * and the budgets below must be divided by the instance count to keep the same
+ * effective ceiling. `RATE_LIMIT_INSTANCES` exists for exactly that.
+ *
+ * ## Fails *closed* now, where the old one failed open
+ *
+ * The Redis version had to fail open — a Redis blip must not lock every editor
+ * out mid-launch. With no external dependency there is nothing to be unavailable,
+ * so the limiter is simply always in force. That is a strict improvement: the old
+ * code silently did **nothing at all** whenever `REDIS_URL` was unset, which is
+ * how most non-production deployments actually ran.
+ *
+ * Memory is bounded by `sweep()`, and keys are address-shaped only (see
+ * `clientKey`), so a rotating key space cannot grow the map without limit.
  */
 import type { Core } from "@strapi/strapi";
-import { createClient, type RedisClientType } from "redis";
 
 interface Tier {
   name: string;
@@ -66,52 +76,50 @@ const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 /** IPv4 / IPv6 shape check — see `clientKey`. */
 const IP_LIKE = /^[0-9a-fA-F:.]{3,45}$/;
 
-const KEY_PREFIX = process.env.REDIS_RATELIMIT_PREFIX ?? "vng:cms:ratelimit:v1";
-
-let client: RedisClientType | null = null;
-let connecting: Promise<unknown> | null = null;
-/** Logged once, not per request, so a Redis outage doesn't flood the log. */
-let degradedLogged = false;
-
-function ensureClient(strapi: Core.Strapi): void {
-  if (client) return;
-  const url = process.env.REDIS_URL;
-  if (!url) return;
-
-  client = createClient({
-    url,
-    socket: {
-      connectTimeout: 1000,
-      reconnectStrategy: (retries) => Math.min(2000, 100 + retries * 100),
-    },
-  }) as RedisClientType;
-
-  // Mandatory: without an 'error' listener node-redis throws on every failed
-  // reconnect. `isReady` gates real usage.
-  client.on("error", (err: Error) => {
-    if (!degradedLogged) {
-      strapi.log.error(`[rate-limit] redis error — failing open: ${err.message}`);
-      degradedLogged = true;
-    }
-  });
-
-  connecting = client.connect().catch((err: Error) => {
-    strapi.log.error(`[rate-limit] initial redis connect failed — failing open: ${err.message}`);
-  });
+interface Bucket {
+  count: number;
+  /** Epoch ms at which this window ends and the counter resets. */
+  resetAt: number;
 }
 
-/** A ready client, or null. Never throws, never blocks beyond the first connect. */
-async function getClient(strapi: Core.Strapi): Promise<RedisClientType | null> {
-  ensureClient(strapi);
-  if (!client) return null;
-  if (client.isReady) return client;
-  await Promise.race([connecting, new Promise((resolve) => setTimeout(resolve, 500))]);
-  return client.isReady ? client : null;
+const buckets = new Map<string, Bucket>();
+
+/**
+ * Drop expired buckets so a rotating key space can't grow memory unbounded.
+ *
+ * Only walks the map once it is large enough to matter — an O(n) sweep on every
+ * request would itself be the cheapest denial of service available against this
+ * middleware.
+ */
+function sweep(now: number): void {
+  if (buckets.size < 5000) return;
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt <= now) buckets.delete(key);
+  }
+}
+
+/**
+ * Fixed-window counter. Returns the request's position in the current window, so
+ * `count > limit` is the rejection test and `limit - count` the remaining budget.
+ */
+function hit(key: string, windowSeconds: number): { count: number; resetAt: number } {
+  const now = Date.now();
+  sweep(now);
+
+  const existing = buckets.get(key);
+  if (!existing || existing.resetAt <= now) {
+    const fresh = { count: 1, resetAt: now + windowSeconds * 1000 };
+    buckets.set(key, fresh);
+    return fresh;
+  }
+
+  existing.count += 1;
+  return existing;
 }
 
 /**
  * Client identity for keying. Prefers the last `X-Forwarded-For` hop appended by
- * our own ALB/CloudFront over the first (which the client controls and can
+ * our own load balancer over the first (which the client controls and can
  * forge); `TRUSTED_PROXY_HOPS` says how many trailing hops are ours.
  * Falls back to Koa's `ctx.request.ip`, which respects `server.proxy`.
  */
@@ -131,9 +139,9 @@ function clientKey(ctx: {
       const configured = Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? "1", 10);
       const trusted = Number.isFinite(configured) && configured > 0 ? configured : 1;
       const hop = hops[Math.max(0, hops.length - trusted)];
-      // The hop becomes part of a Redis key. An arbitrary attacker-controlled string
+      // The hop becomes part of a bucket key. An arbitrary attacker-controlled string
       // would let one client mint unlimited distinct keys — evading its own limit while
-      // filling Redis with short-lived counters. Only address-shaped values are keyed.
+      // growing the map. Only address-shaped values are keyed.
       if (hop && IP_LIKE.test(hop)) return hop;
     }
   }
@@ -164,55 +172,58 @@ function tierFor(path: string, method: string, tiers: Record<string, Tier>): Tie
 }
 
 /**
- * Fixed-window counter: `INCR` then `EXPIRE` on first hit. One round-trip in the
- * steady state (the pipeline is sent as a MULTI), and no Lua script to keep in
- * sync with ElastiCache's script cache.
+ * Read a positive integer from the environment, falling back to `fallback` for
+ * anything missing or malformed. A `NaN` limit would compare false against every
+ * count and disable the tier silently.
  */
-async function hit(
-  redis: RedisClientType,
-  key: string,
-  windowSeconds: number,
-): Promise<number | null> {
-  try {
-    const results = await redis.multi().incr(key).expire(key, windowSeconds, "NX").exec();
-    const count = Number(results?.[0]);
-    return Number.isFinite(count) ? count : null;
-  } catch {
-    return null;
-  }
+function positiveInt(raw: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(raw ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
+  /**
+   * Divisor for every budget. Left at 1 for the single-instance deployment this
+   * is built for; set it to the instance count if the CMS is ever scaled out, so
+   * the *effective* cluster-wide ceiling stays what these numbers say. It cannot
+   * make counting cluster-wide — see the module doc — only stop the ceiling from
+   * multiplying silently.
+   */
+  const instances = positiveInt(process.env.RATE_LIMIT_INSTANCES, 1);
+  const share = (limit: number) => Math.max(1, Math.floor(limit / instances));
+
   const tiers: Record<string, Tier> = {
     auth: {
       name: "auth",
-      limit: Number(process.env.RATE_LIMIT_AUTH ?? 10),
-      windowSeconds: Number(process.env.RATE_LIMIT_AUTH_WINDOW ?? 300),
+      limit: share(positiveInt(process.env.RATE_LIMIT_AUTH, 10)),
+      windowSeconds: positiveInt(process.env.RATE_LIMIT_AUTH_WINDOW, 300),
     },
     sso: {
       name: "sso",
-      limit: Number(process.env.RATE_LIMIT_SSO ?? 60),
-      windowSeconds: Number(process.env.RATE_LIMIT_SSO_WINDOW ?? 300),
+      limit: share(positiveInt(process.env.RATE_LIMIT_SSO, 60)),
+      windowSeconds: positiveInt(process.env.RATE_LIMIT_SSO_WINDOW, 300),
     },
     write: {
       name: "write",
-      limit: Number(process.env.RATE_LIMIT_WRITE ?? 120),
-      windowSeconds: Number(process.env.RATE_LIMIT_WRITE_WINDOW ?? 60),
+      limit: share(positiveInt(process.env.RATE_LIMIT_WRITE, 120)),
+      windowSeconds: positiveInt(process.env.RATE_LIMIT_WRITE_WINDOW, 60),
     },
     read: {
       name: "read",
-      limit: Number(process.env.RATE_LIMIT_READ ?? 600),
-      windowSeconds: Number(process.env.RATE_LIMIT_READ_WINDOW ?? 60),
+      limit: share(positiveInt(process.env.RATE_LIMIT_READ, 600)),
+      windowSeconds: positiveInt(process.env.RATE_LIMIT_READ_WINDOW, 60),
     },
   };
 
   const enabled = process.env.RATE_LIMIT_ENABLED !== "false";
   if (!enabled) {
+    // Loud, because this is a security control being turned off. The only
+    // legitimate use is a load test against a throwaway environment.
     strapi.log.warn("[rate-limit] disabled via RATE_LIMIT_ENABLED=false");
-  } else if (!process.env.REDIS_URL) {
+  } else if (instances > 1) {
     strapi.log.warn(
-      "[rate-limit] REDIS_URL is not set — rate limiting is INACTIVE. " +
-        "Set REDIS_URL before production; see docs/adr/006-security-hardening.md",
+      `[rate-limit] RATE_LIMIT_INSTANCES=${instances}: counters are per-instance, ` +
+        "so budgets are divided rather than shared. See ADR-008 before scaling out.",
     );
   }
 
@@ -220,22 +231,19 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
     if (!enabled) return next();
 
     const tier = tierFor(ctx.request.path, ctx.request.method, tiers);
-    const redis = await getClient(strapi);
-    if (!redis) return next(); // fail open — see the module doc
-
-    const key = `${KEY_PREFIX}:${tier.name}:${clientKey(ctx)}`;
-    const count = await hit(redis, key, tier.windowSeconds);
-    if (count === null) return next(); // fail open
+    const key = `${tier.name}:${clientKey(ctx)}`;
+    const { count, resetAt } = hit(key, tier.windowSeconds);
 
     ctx.set("X-RateLimit-Limit", String(tier.limit));
     ctx.set("X-RateLimit-Remaining", String(Math.max(0, tier.limit - count)));
 
     if (count > tier.limit) {
+      const retryAfter = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
       strapi.log.warn(
         `[rate-limit] ${tier.name} tier exceeded: ${ctx.request.method} ${ctx.request.path} ` +
           `from ${clientKey(ctx)} (${count}/${tier.limit} per ${tier.windowSeconds}s)`,
       );
-      ctx.set("Retry-After", String(tier.windowSeconds));
+      ctx.set("Retry-After", String(retryAfter));
       return ctx.tooManyRequests("Rate limit exceeded. Please retry later.");
     }
 

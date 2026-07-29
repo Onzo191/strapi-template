@@ -119,29 +119,37 @@ asserts all of it on the wire.
 `EMBED_ALLOWED_ORIGINS` gates `frame-src`. **Empty means `'none'`** — an editor cannot
 embed an arbitrary third-party document until an origin is explicitly configured.
 
-## Rate limiting — and why the two limiters differ
+## Rate limiting
 
 | | Web (`apps/web/lib/rate-limit.ts`) | CMS (`apps/cms/src/middlewares/rate-limit.ts`) |
 |---|---|---|
-| Scope | per instance, in memory | **cluster-wide**, Redis |
-| Protects | `/api/revalidate`, `/api/preview` | admin login, writes, reads |
-| On failure | n/a | **fails open**, logged at `error` |
+| Scope | per instance, in memory | per instance, in memory |
+| Protects | `/api/revalidate`, `/api/preview` | admin login, SSO, writes, reads |
+| Tiers | one budget per route | `auth` / `sso` / `write` / `read` |
 
-The CMS one must be cluster-wide because it fronts login: per-instance counters would
-give an attacker `limit × instances` attempts and let them round-robin below every
-instance's threshold. The web one need not, because both endpoints it guards are
-already authenticated by a shared secret — it is a second-order brake, and a
-factor-of-two slack doesn't change that.
+Both are in-process, with no external store. That is sound **only because each app
+runs as a single instance** ([ADR-008](../../../docs/adr/008-single-instance.md)):
+per-instance is then the whole deployment.
 
-Two calls that look inconsistent and aren't:
+The constraint is load-bearing for the CMS limiter in particular, because it fronts
+login. With N instances an attacker gets `limit × N` attempts and can round-robin so
+no single instance ever sees enough failures to trip — for credential stuffing that
+difference is the whole control. `RATE_LIMIT_INSTANCES` divides the budgets as a
+partial mitigation; it cannot make counting shared. **Scaling either app out is an
+ADR decision, not a deployment knob.**
 
-- The **rate limiter fails open**: a Redis blip must not lock every editor out of the
-  CMS mid-launch, and bcrypt + short sessions + IdP MFA remain in force.
-- The **virus scanner fails closed**: an unavailable scanner blocks one upload, and
-  serving malware from `vng.com.vn` is a takedown event.
+The web limiter would survive multiple instances regardless: both endpoints it guards
+are already authenticated by a shared secret, so it is a second-order brake and a
+factor-of-N slack doesn't change what it protects.
 
-Failing open blocks nobody; failing closed blocks one action. Size the decision by
-what the failure costs.
+Neither limiter can fail open any more — there is no dependency to be unavailable.
+That is a change from the earlier Redis design, which failed open by necessity and,
+worse, did nothing at all whenever `REDIS_URL` was unset.
+
+Contrast with the **virus scanner, which fails closed**: an unavailable scanner blocks
+one upload, and serving malware from `vng.com.vn` is a takedown event. Failing open
+blocks nobody; failing closed blocks one action. Size the decision by what the failure
+costs.
 
 `/admin/access-token` is deliberately **not** on the tight auth tier — every admin tab
 calls it on each 15-minute refresh, so a 10-per-5-minute budget would lock working

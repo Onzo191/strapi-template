@@ -27,11 +27,12 @@ overturning the decision it records.
 |---|---|
 | [001](/adr/rendering-strategy) | Rendering: ISR + cache tags, not SSG or SSR |
 | [002](/adr/ui-base) | UI base: shadcn/ui + Tailwind v4, Astryx deferred |
-| [003](/adr/redis-cache-handler) | Redis-backed Next cache handler — mandatory, not optional |
+| [003](/adr/redis-cache-handler) | Redis-backed Next cache handler — *superseded by 008* |
 | [004](/adr/editorial-workflow-on-ce) | Editorial workflow + immutable audit on Community edition |
 | [005](/adr/monorepo-ci-change-detection) | Monorepo topology + change-detection CI |
 | [006](/adr/security-hardening) | Launch security posture (P7) |
 | [007](/adr/csp-without-nonces) | Static CSP without per-response nonces |
+| [008](/adr/single-instance) | Single instance per app; no shared cache, no Redis |
 
 **[Reference](/architecture_plan)** — the architecture plan, the requirements corpus
 and the phase guide. Background, not instructions.
@@ -55,10 +56,13 @@ Two consequences follow, and both are easy to break by accident:
 
 ```bash
 pnpm install
-docker compose up          # postgres + redis + cms + web ×2
+docker compose up          # postgres + cms + web
 ```
 
-Two web instances against one Redis is not incidental — it is how multi-instance cache
-invalidation gets exercised locally instead of discovered in production
-([ADR-003](/adr/redis-cache-handler)). `next dev` bypasses the custom cache handler
-entirely, so nothing about ISR or cache tags can be validated against it.
+Stateful services live in `docker-compose.infra.yml` (pulled in via `include`), so the
+database can stay up while the apps restart on top of it.
+
+**One instance of each app, deliberately** ([ADR-008](/adr/single-instance)). The ISR
+cache is Next's own per-instance cache, so a second web replica would serve content the
+publish webhook never invalidated. `next dev` does not use the production ISR cache
+either, so nothing about ISR or cache tags can be validated against it.

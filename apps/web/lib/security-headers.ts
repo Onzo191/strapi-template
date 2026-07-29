@@ -3,10 +3,9 @@
  * passed").
  *
  * Emitted from `next.config.ts` `headers()` so they are **static**: every
- * response carries them, including the ISR-cached HTML served straight from the
- * Redis cache handler (§5.3) and the `_next/static` assets served via
- * CloudFront. That is the whole reason this is a config-level header set rather
- * than middleware-generated.
+ * response carries them, including ISR-cached HTML served straight from the
+ * cache and the `_next/static` assets. That is the whole reason this is a
+ * config-level header set rather than middleware-generated.
  *
  * ## Why no CSP nonce
  *

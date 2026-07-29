@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { buildSecurityHeaders, parseOriginList } from "./lib/security-headers";
@@ -42,13 +41,13 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Workspace packages are shipped as TypeScript source and compiled by Next.
   transpilePackages: ["@vng/shared", "@vng/design-system"],
-  // Redis-backed ISR cache (§5.3) — makes `revalidateTag` cluster-wide so a
-  // publish webhook to one instance invalidates every instance. Next only
-  // uses `cacheHandler` in production builds (`next dev` bypasses it).
-  // `cacheMaxMemorySize: 0` disables the default in-memory layer so no
-  // instance can serve stale HTML out of local memory after a revalidation.
-  cacheHandler: join(process.cwd(), "cache-handler.mjs"),
-  cacheMaxMemorySize: 0,
+  // No custom `cacheHandler`: the ISR cache is Next's own default (in-memory +
+  // filesystem, per instance). That is correct for the single-instance
+  // deployment this app targets — `revalidateTag()` runs in the same process
+  // that serves pages, so a publish webhook invalidates the only cache there is.
+  // Scaling past one instance would reintroduce the problem a shared cache
+  // solves (a webhook to instance A leaving B stale); ADR-008 records that
+  // trade-off and what to restore.
   images: {
     // Explicit rather than relying on Next's default — §6.4 calls for AVIF/WebP.
     formats: ["image/avif", "image/webp"],

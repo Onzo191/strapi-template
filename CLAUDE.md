@@ -21,7 +21,7 @@ small and fast.
 | Strapi content-types, schemas, seed, plugins | `cms-strapi` |
 | `<head>` metadata, JSON-LD, sitemap, hreflang, redirects | `seo-aio` |
 | Locale routing, `messages/*.json`, translations | `i18n-routing` |
-| Cache revalidation, webhooks, redis, freshness | `content-freshness` |
+| Cache revalidation, webhooks, ISR, freshness | `content-freshness` |
 | Playwright e2e, Lighthouse | `qa-e2e` |
 | Auth, CSP, rate limits, SSO, secrets, uploads | `security` |
 
@@ -41,7 +41,7 @@ pnpm typecheck                   # tsc --noEmit across the graph
 pnpm test                        # node:test unit tests
 pnpm build                       # turbo, affected only
 
-docker compose up                # postgres + redis + cms + web ×2 (the real stack)
+docker compose up                # postgres + cms + web (the real stack)
 pnpm --filter @vng/qa e2e        # Playwright
 pnpm --filter @vng/qa lighthouse # Lighthouse budgets
 pnpm --filter @vng/qa load:revalidate   # revalidate-path load test
@@ -75,9 +75,12 @@ Strapi client, the cache-tag scheme, Zod block schemas, and the security helpers
 - **Don't run destructive Strapi commands** (`strapi ts:generate-types --force`,
   data-transfer imports, `docker compose down -v`) without being asked — the local
   Postgres volume holds the only copy of whatever the developer was working on.
-- **`docker compose up` is the only faithful local stack.** `next dev` bypasses the
-  Redis cache handler, so nothing about ISR, cache tags or multi-instance
-  behaviour can be validated with it.
+- **`docker compose up` is the only faithful local stack.** `next dev` does not use
+  the production ISR cache, so nothing about ISR, cache tags or revalidation can be
+  validated with it. Stateful services are in `docker-compose.infra.yml`.
+- **One instance of each app** ([ADR-008](docs/adr/008-single-instance.md)). The ISR
+  cache and both rate limiters are per-process; adding a replica silently breaks
+  content freshness. Don't add one without reading that ADR.
 - **Content changes never require a deploy.** If a change seems to need a rebuild
   to make content appear, the cache-tag wiring is wrong — fix that instead.
 - Don't commit or push unless asked. Commit style: Conventional Commits (commitlint).

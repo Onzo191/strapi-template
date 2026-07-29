@@ -1,41 +1,25 @@
-# Local development stack: `docker compose up` boots postgres + redis + cms + web.
+# Local development stack: the two applications, on top of the infrastructure
+# declared in docker-compose.infra.yml (postgres, and optionally clamav).
+#
+#   docker compose up          # infra + cms + web
+#
+# `include` pulls the infra file in, so the command above still brings up
+# everything. Bring up only the infrastructure with:
+#
+#   docker compose -f docker-compose.infra.yml up -d
+#
+# One instance of each app, deliberately (ADR-008): the ISR cache is Next's own
+# per-instance cache, so a second web container would serve content that the
+# publish webhook never invalidated. If you scale this stack out, read ADR-008
+# first — the cache and the CMS rate limiter both assume a single instance.
+#
 # Secrets here are DEV-ONLY placeholders. Never reuse in staging/prod.
 name: vng-platform
 
+include:
+  - docker-compose.infra.yml
+
 services:
-  postgres:
-    image: postgres:17
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: vng
-      POSTGRES_USER: vng
-      POSTGRES_PASSWORD: vng
-    # Host port 5433 (container stays 5432) to avoid colliding with other
-    # local Postgres stacks. Internal cms↔db traffic uses the compose network.
-    ports:
-      - "5433:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vng -d vng"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   cms:
     build:
       context: .
@@ -62,10 +46,8 @@ services:
       # apps/cms/src/bootstrap/seed.ts. Safe to leave on: it no-ops once any
       # article exists.
       SEED: "true"
-      # P3 revalidation webhook (§5.3). The CMS signs with REVALIDATE_SECRET
-      # and POSTs to a SINGLE web instance (`web`). The Redis-backed cache
-      # handler then propagates the invalidation to `web2` too — this is the
-      # multi-instance behaviour we're proving.
+      # P3 revalidation webhook (§5.3). The CMS signs with REVALIDATE_SECRET and
+      # POSTs to the web app, which calls revalidateTag on its own ISR cache.
       WEB_REVALIDATE_URL: http://web:3000/api/revalidate
       REVALIDATE_SECRET: dev-revalidate-secret-change-me
       # ── P7 hardening (§9) ────────────────────────────────────────────────
@@ -75,15 +57,13 @@ services:
       # exercised in production is an auth model nobody has tested.
       STRAPI_READONLY_API_TOKEN: dev-readonly-token-0123456789abcdef0123456789
       CMS_PUBLIC_READ: "false"
-      # Redis-backed cluster-wide rate limiting (same instance as the ISR cache,
-      # separate key prefix).
-      REDIS_URL: redis://redis:6379
-      # Both apps are reached directly on the compose network, so XFF carries no
-      # trusted hop; keying on ctx.request.ip is correct here.
+      # Rate limiting is in-process (src/middlewares/rate-limit.ts). Nothing to
+      # configure for a single instance; see ADR-008 before scaling out.
+      # Reached directly on the compose network, so XFF carries no trusted hop;
+      # keying on ctx.request.ip is correct here.
       TRUSTED_PROXY_HOPS: "1"
-      # CORS + admin-CSP allow-list. Both web instances, since either may be the
-      # browser's origin when testing multi-instance behaviour.
-      WEB_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      # CORS + admin-CSP allow-list.
+      WEB_ALLOWED_ORIGINS: http://localhost:3000
       # Admin cookies must not be Secure over plain http, or login cannot
       # complete — NODE_ENV=production above would otherwise make them Secure.
       ADMIN_COOKIE_SECURE: "false"
@@ -98,8 +78,8 @@ services:
       #
       #   CLAMAV_HOST=clamav docker compose --profile scan up
       #
-      # In AWS, clamd is a sidecar container in the CMS task definition and this
-      # is always set (see docs/adr/005-security-hardening.md).
+      # In production clamd runs alongside the CMS and this is always set (see
+      # docs/adr/006-security-hardening.md).
       CLAMAV_HOST: ${CLAMAV_HOST:-}
       CLAMAV_PORT: "3310"
       # Fail closed, as in prod: an unreachable scanner rejects the upload. Only
@@ -114,37 +94,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
 
-  # ClamAV daemon for inline upload scanning (Req §2, §0 A6). In AWS this is a
-  # sidecar container in the CMS's ECS task definition, reachable over localhost;
-  # here it is a compose service reachable as `clamav`.
-  #
-  # Behind the `scan` profile, so it does not run unless asked for:
-  #
-  #   CLAMAV_HOST=clamav docker compose --profile scan up
-  #
-  # `platform` is pinned because upstream publishes **amd64 only** — without it,
-  # `docker compose up` fails outright on an arm64 host rather than falling back
-  # to emulation. Under emulation the first boot takes several minutes to load the
-  # signature database, hence the long `start_period` and the profile.
-  clamav:
-    profiles: ["scan"]
-    image: clamav/clamav:1.4
-    platform: linux/amd64
-    restart: unless-stopped
-    volumes:
-      - clamavdb:/var/lib/clamav
-    healthcheck:
-      test: ["CMD-SHELL", "clamdcheck.sh || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-      start_period: 600s
-
-  # Two web instances behind a SHARED Redis (§A2). The webhook only ever hits
-  # `web`; `web2` must still go fresh via Redis — that's the P3 proof.
   web:
     build:
       context: .
@@ -156,8 +106,6 @@ services:
       PORT: 3000
       # Server-side calls to Strapi go over the compose network.
       STRAPI_URL: http://cms:1337
-      # Shared ISR cache — the same Redis both instances read/write (§5.3).
-      REDIS_URL: redis://redis:6379
       # Must match the CMS's REVALIDATE_SECRET to accept signed webhooks.
       REVALIDATE_SECRET: dev-revalidate-secret-change-me
       # P7 (§9): the Content API is token-authenticated. Same value the CMS
@@ -170,27 +118,6 @@ services:
       - "3000:3000"
     depends_on:
       - cms
-      - redis
-
-  web2:
-    # Reuses the image built by `web` (no second build).
-    image: vng-web:local
-    restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      STRAPI_URL: http://cms:1337
-      REDIS_URL: redis://redis:6379
-      REVALIDATE_SECRET: dev-revalidate-secret-change-me
-    ports:
-      - "3001:3000"
-    depends_on:
-      - web
-      - redis
 
 volumes:
-  pgdata:
-  redisdata:
   cmsuploads:
-  # Persisted so a container restart doesn't re-download ~250 MB of signatures.
-  clamavdb:

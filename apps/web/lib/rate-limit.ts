@@ -4,9 +4,10 @@ import "server-only";
  * Per-instance fixed-window rate limiter for the web app's Route Handlers
  * (P7 §9 "rate limit").
  *
- * Scope, stated plainly: this counts **per instance**, in process memory. With
- * two Fargate tasks behind an ALB (§A2) the effective ceiling is `limit ×
- * instances`. That is deliberate and sufficient for what it protects:
+ * Scope, stated plainly: this counts **per instance**, in process memory. The app
+ * runs as a single instance (ADR-008), so per-instance is the whole deployment —
+ * but the design would be sufficient even if it were not, because of what it
+ * protects:
  *
  * - `/api/revalidate` is already authenticated by HMAC + a 5-minute replay
  *   window, so this is a second-order brake on a *valid-signature* flood (a
@@ -15,13 +16,10 @@ import "server-only";
  *   brute-forcing that secret impractical, and a factor-of-two slack on the
  *   attempt budget does not change that.
  *
- * The CMS's own limiter (`apps/cms/src/middlewares/rate-limit.ts`) is
- * Redis-backed and cluster-wide because it fronts admin login, where the
- * per-instance slack *would* matter. Sharing that Redis from here was considered
- * and rejected: the ISR cache handler's Redis client is a separate connection
- * pool on the hot render path, and coupling request admission to its
- * availability would turn a Redis blip into a site outage — the cache handler
- * explicitly degrades to no-cache instead.
+ * The CMS's own limiter (`apps/cms/src/middlewares/rate-limit.ts`) uses the same
+ * in-process approach. It fronts admin login, where per-instance slack *would*
+ * matter — which is precisely why scaling either app out is an ADR-008 decision
+ * rather than a deployment knob.
  */
 
 interface Bucket {

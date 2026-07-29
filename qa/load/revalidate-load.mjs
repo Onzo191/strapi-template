@@ -6,7 +6,7 @@
  * ## What this measures, and why it is the right thing to measure
  *
  * The revalidate endpoint itself is trivially fast — verify an HMAC, stamp some
- * Redis keys. Benchmarking *that* would tell us nothing useful. The risk in this
+ * cache tags. Benchmarking *that* would tell us nothing useful. The risk in this
  * architecture is the **second-order effect**: every accepted webhook invalidates
  * a tag cluster-wide, and the next request for each affected page is a cache MISS
  * that regenerates by fetching Strapi. A bulk publish of 200 articles therefore

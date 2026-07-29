@@ -1,0 +1,65 @@
+# Infrastructure only: the stateful services the apps depend on.
+#
+# Split out from docker-compose.yml so you can bring the database up once and
+# leave it running while restarting, rebuilding or reconfiguring the apps
+# freely. The app stack declares this file as a dependency, so the ordinary
+#
+#   docker compose up
+#
+# still starts everything — see docker-compose.yml. Use this file directly when
+# you want *only* the infrastructure:
+#
+#   docker compose -f docker-compose.infra.yml up -d
+#
+# Secrets here are DEV-ONLY placeholders. Never reuse in staging/prod.
+name: vng-platform
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vng
+      POSTGRES_USER: vng
+      POSTGRES_PASSWORD: vng
+    # Host port 5433 (container stays 5432) to avoid colliding with other
+    # local Postgres stacks. Internal cms↔db traffic uses the compose network.
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vng -d vng"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ClamAV daemon for inline upload scanning (Req §2, §0 A6). In production this
+  # runs alongside the CMS, reachable over the container network.
+  #
+  # Behind the `scan` profile, so it does not run unless asked for:
+  #
+  #   CLAMAV_HOST=clamav docker compose --profile scan up
+  #
+  # `platform` is pinned because upstream publishes **amd64 only** — without it,
+  # `docker compose up` fails outright on an arm64 host rather than falling back
+  # to emulation. Under emulation the first boot takes several minutes to load the
+  # signature database, hence the long `start_period` and the profile.
+  clamav:
+    profiles: ["scan"]
+    image: clamav/clamav:1.4
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      - clamavdb:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 600s
+
+volumes:
+  pgdata:
+  # Persisted so a container restart doesn't re-download ~250 MB of signatures.
+  clamavdb:

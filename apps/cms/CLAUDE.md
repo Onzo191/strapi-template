@@ -20,7 +20,7 @@ src/
 │  └─ upload-scan/   HMAC-signed virus-scan verdict callback (no content type)
 ├─ components/       page-builder components — blocks/, elements/, shared/, navigation/
 ├─ bootstrap/        locales, Content-API access model, demo seed
-├─ middlewares/      draft-guard (document-service), rate-limit (Koa, Redis)
+├─ middlewares/      draft-guard (document-service), rate-limit (Koa, in-process)
 ├─ upload/           clamav client + inline scan provider decoration
 ├─ webhooks/         revalidation.ts — document-service middleware → signed POST
 ├─ plugins/editorial/  workflow + immutable audit log (§4.5)
@@ -108,13 +108,14 @@ three options, in order of preference:
 - **Admin sessions are short** (`config/admin.ts`): 15-min access token, 30-min
   idle, 8-h absolute, and "remember me" is capped to the same 8 h. Strapi's defaults
   are 30 days; don't restore them.
-- **Rate limiting is Redis-backed** (`src/middlewares/rate-limit.ts`) so limits are
-  cluster-wide — per-instance counters would give an attacker `limit × instances`
-  login attempts and let them round-robin below every instance's threshold. It
-  **fails open** if Redis is down: a Redis blip must not lock every editor out
-  mid-launch, and bcrypt + session limits + IdP MFA remain in force. Note this is
-  the opposite call from the virus scanner, which fails **closed** — one blocks a
-  single action, the other blocks the whole newsroom.
+- **Rate limiting is in-process** (`src/middlewares/rate-limit.ts`) — fixed-window
+  counters in a `Map`, four tiers (`auth`/`sso`/`write`/`read`). Sound because the
+  CMS runs as **one instance**, so per-instance is cluster-wide
+  ([ADR-008](../../docs/adr/008-single-instance.md)). It has no external dependency
+  and so is always in force; the earlier Redis version silently did nothing whenever
+  `REDIS_URL` was unset. If the CMS is ever scaled out, an attacker gets
+  `limit × instances` login attempts and can round-robin below every threshold —
+  set `RATE_LIMIT_INSTANCES` to divide the budgets, and read the ADR.
 - **Uploads are scanned.** `src/upload/virus-scan.ts` decorates the upload provider
   so bytes are scanned before they reach S3 (`CLAMAV_HOST`), plus an async S3 →
   Lambda → signed-callback path for objects that arrive by any other route.
@@ -130,7 +131,7 @@ three options, in order of preference:
 ## Local development
 
 ```bash
-docker compose up                              # postgres + redis + cms + web ×2
+docker compose up                              # postgres + cms + web
 CLAMAV_HOST=clamav docker compose --profile scan up   # + inline virus scanning
 
 pnpm --filter @vng/cms dev                     # strapi develop against the compose DB

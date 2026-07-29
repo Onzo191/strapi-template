@@ -3,8 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 const baseURL = process.env.QA_BASE_URL ?? "http://localhost:3000";
 
 /**
- * Runs against the same stack `docker-compose.yml` describes (postgres + redis + cms + web,
- * seeded content) — the CMS-down fallback (`loadResilient`) means an unseeded web app renders
+ * Runs against the same stack `docker-compose.yml` describes (postgres + cms + web, seeded
+ * content) — the CMS-down fallback (`loadResilient`) means an unseeded web app renders
  * empty/`notFound()` pages, so these specs need real content behind them, not a bare `next dev`.
  */
 export default defineConfig({
@@ -25,8 +25,8 @@ export default defineConfig({
     // known to be flaky/frozen on some CI/sandboxed host OS versions.
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
-  // CI starts `web` itself (see .github/workflows/ci.yml) so it can also start `cms`/postgres/redis
-  // first — Playwright's own `webServer` only knows how to run one process, not the full stack.
+  // CI starts `web` itself so it can also start `cms`/postgres first — Playwright's own
+  // `webServer` only knows how to run one process, not the full stack.
   webServer: process.env.CI
     ? undefined
     : {

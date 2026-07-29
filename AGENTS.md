@@ -23,7 +23,7 @@ articles, first-class SEO/AIO, editors autonomous from engineering. Soft launch
 | **CMS** | Strapi 5 **Community** + Postgres 17 |
 | **Shared** | `@vng/design-system` (shadcn/ui), `@vng/shared` (contracts, dual-built) |
 | **QA** | Playwright + Lighthouse CI in `qa/` |
-| **Infra** | AWS — ECS Fargate ×2 per app, RDS Multi-AZ, ElastiCache Redis, S3 + CloudFront |
+| **Infra** | Two Docker images (web, cms), **one instance each** — see [ADR-008](docs/adr/008-single-instance.md). Deployment is a separate team's. |
 | **Docs** | Docusaurus in `docs/` — ADRs + task recipes |
 
 ---
@@ -60,15 +60,21 @@ pnpm lint:fix                    # Biome check --write
 pnpm typecheck                   # tsc --noEmit everywhere
 pnpm test                        # unit tests (node:test)
 
-docker compose up                # postgres + redis + clamav + cms + web ×2
+docker compose up                # postgres + cms + web  (clamav behind --profile scan)
 pnpm --filter @vng/qa e2e        # Playwright
 pnpm --filter @vng/qa lighthouse # Lighthouse CI budgets
 pnpm --filter @vng/qa load:revalidate   # revalidate-path load test
 ```
 
-`docker compose up` is the real local stack: **two** web instances behind a shared
-Redis, so multi-instance cache behaviour is exercised locally rather than
-discovered in production.
+`docker compose up` is the real local stack — production images, production
+`NODE_ENV`, token-authenticated Content API. Stateful services live in
+`docker-compose.infra.yml` (pulled in via `include`), so you can bring the database
+up once and restart the apps freely on top of it.
+
+**One instance of each app, deliberately.** The ISR cache is Next's own
+per-instance cache, so a second web replica would serve content the publish webhook
+never invalidated. Read [ADR-008](docs/adr/008-single-instance.md) before adding
+one.
 
 ---
 
@@ -98,7 +104,7 @@ Do **not** read every doc up front. Match your task and load that skill.
 | Strapi content-types, schemas, seed, plugins | `cms-strapi` |
 | `<head>` metadata, JSON-LD, sitemap, hreflang, redirects | `seo-aio` |
 | Locale routing, `messages/*.json`, translations | `i18n-routing` |
-| Cache revalidation, webhooks, redis, freshness | `content-freshness` |
+| Cache revalidation, webhooks, ISR, freshness | `content-freshness` |
 | Playwright e2e, Lighthouse | `qa-e2e` |
 | Auth, CSP, rate limits, SSO, secrets, uploads | `security` |
 
@@ -184,7 +190,9 @@ wrong — see `.claude/skills/security` and
   *inside* each route, so a global middleware in `config/middlewares.ts` cannot
   see `ctx.state.auth`. Use a document-service middleware (see `draft-guard.ts`)
   or a per-route middleware.
-- **`next dev` bypasses the custom cache handler.** Anything about ISR, tags or
-  multi-instance behaviour must be tested against `docker compose up`.
-- **The web app's rate limiter is per-instance**, the CMS's is Redis-backed and
-  cluster-wide. That asymmetry is deliberate and documented in each file.
+- **`next dev` does not use the production ISR cache.** Anything about ISR, cache
+  tags or revalidation must be tested against `docker compose up`.
+- **Both rate limiters are in-process** (`apps/web/lib/rate-limit.ts`,
+  `apps/cms/src/middlewares/rate-limit.ts`). That is sound only because each app
+  runs as one instance; scaling out multiplies every budget by the replica count.
+  See [ADR-008](docs/adr/008-single-instance.md).

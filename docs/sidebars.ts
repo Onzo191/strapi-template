@@ -27,6 +27,7 @@ const sidebars: SidebarsConfig = {
     "adr/monorepo-ci-change-detection",
     "adr/security-hardening",
     "adr/csp-without-nonces",
+    "adr/single-instance",
   ],
   reference: [
     "index",

@@ -154,27 +154,34 @@ a half-functional CMS.
 
 | Control | On failure | Why |
 |---|---|---|
-| Rate limiter (Redis down) | **open**, logged at `error` | A Redis blip must not lock every editor out of the CMS mid-launch. Not the only login control: bcrypt, short sessions and IdP MFA remain in force. |
 | Virus scanner (clamd down) | **closed** | Blocks one upload. Serving malware from `vng.com.vn` is a takedown and a customer-trust event. |
 | Redirect resolver (CMS down) | **open** | A CMS outage must not break navigation on the whole site. |
-| Cache handler (Redis down) | **open** (no-cache) | A cache layer must never be able to take the site down. |
 
 The rule: failing open blocks nobody, failing closed blocks one action. Size the
 decision by what the failure actually costs.
 
-### Rate limiting is cluster-wide on the CMS, per-instance on the web app
+> **Amended by [ADR-008](008-single-instance.md).** This table used to include two
+> Redis-dependent rows — the rate limiter failing **open** and the cache handler
+> degrading to no-cache. Neither applies now: Redis is gone, both rate limiters count
+> in process, and there is no external dependency left to be unavailable. The limiters
+> are therefore always in force, which is stricter than what this ADR originally
+> specified.
 
-The CMS limiter is Redis-backed because it fronts admin login: per-instance counters
-give an attacker `limit × instances` attempts and let them round-robin so no single
+### Rate limiting is per-instance on both apps
+
+Both limiters count in process memory. This is sound only because each app runs as a
+single instance ([ADR-008](008-single-instance.md)), which makes per-instance the whole
+deployment.
+
+The constraint is load-bearing for the CMS limiter, because it fronts admin login: with
+N instances an attacker gets `limit × N` attempts and can round-robin so no single
 instance ever sees enough failures to trip. For credential stuffing that difference
-*is* the control.
+*is* the control. `RATE_LIMIT_INSTANCES` divides the budgets as a partial mitigation;
+it cannot make counting shared, which is why scaling out is an ADR decision.
 
-The web app's limiter is in-process, and deliberately so. Both endpoints it guards are
-already authenticated by a shared secret, so it is a second-order brake and a
-factor-of-two slack does not change its value. Sharing the cache handler's Redis was
-considered and rejected: that client sits on the hot render path, and coupling request
-admission to its availability would turn a Redis blip into a site outage — the exact
-thing the handler's degrade-to-no-cache behaviour is designed to prevent.
+The web app's limiter would be fine either way. Both endpoints it guards are already
+authenticated by a shared secret, so it is a second-order brake and a factor-of-N slack
+does not change its value.
 
 Two tier choices worth recording because they are availability bugs waiting to happen:
 `/admin/access-token` is **not** on the tight auth tier (every admin tab calls it every

@@ -9,14 +9,16 @@ one, supersede it with a new ADR rather than editing history.
 
 001–005 are the set seeded by the architecture plan (§7). 006–007 were added during
 the P7 hardening pass, when two decisions turned out to need their own record rather
-than a paragraph inside 006.
+than a paragraph inside 006. 008 records the narrowing of the delivery model to two
+Docker images, which withdrew assumption A2 and superseded 003.
 
 | # | Decision | Status |
 |---|---|---|
 | [001](001-rendering-strategy.md) | Rendering: ISR + cache tags, not SSG or SSR | Accepted |
 | [002](002-ui-base.md) | UI base: shadcn/ui + Tailwind v4, Astryx deferred | Accepted |
-| [003](003-redis-cache-handler.md) | Redis-backed Next cache handler — mandatory, not optional | Accepted |
+| [003](003-redis-cache-handler.md) | Redis-backed Next cache handler — mandatory, not optional | Superseded by 008 |
 | [004](004-editorial-workflow-on-ce.md) | Editorial workflow + immutable audit on Community edition | Accepted |
 | [005](005-monorepo-ci-change-detection.md) | Monorepo topology + change-detection CI | Accepted |
 | [006](006-security-hardening.md) | Launch security posture (P7) | Accepted |
 | [007](007-csp-without-nonces.md) | Static CSP without per-response nonces | Accepted |
+| [008](008-single-instance.md) | Single instance per app; no shared cache, no Redis | Accepted |

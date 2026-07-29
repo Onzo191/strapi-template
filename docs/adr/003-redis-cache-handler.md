@@ -1,8 +1,18 @@
 # ADR-003 — Redis-backed Next cache handler: mandatory, not optional
 
-- **Status:** Accepted
+- **Status:** **Superseded by [ADR-008](008-single-instance.md)**
 - **Date:** 2026-07 (P3)
 - **Relates to:** plan §1, §5.3, assumptions A2 and A4
+
+> **Superseded.** The delivery model changed to "two Docker images, one instance
+> each" and assumption A2 (≥2 instances) was withdrawn, which removes the premise
+> this ADR rests on — see [ADR-008](008-single-instance.md). Redis and
+> `cache-handler.mjs` no longer exist in the codebase.
+>
+> Kept because the reasoning below is still correct *given* multiple instances, and
+> it is the design to restore if the app is ever scaled out. The tag semantics in
+> particular (mirroring Next's `tagsManifest` / `areTagsExpired`) took real effort
+> to get right.
 
 ## Context
 

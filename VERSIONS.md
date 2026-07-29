@@ -43,8 +43,11 @@ latest stable at scaffold time (2026-07-24). Major bumps must go through an ADR
 | Image | Pinned |
 |---|---|
 | postgres | 17 |
-| redis | 7-alpine |
+| clamav | 1.4 (behind the `scan` compose profile) |
 | node (Docker base) | 24-slim |
+
+Redis was removed by [ADR-008](docs/adr/008-single-instance.md) along with the shared
+cache handler.
 
 ## Deviations from the plan's §10.3 pin table (and why)
 

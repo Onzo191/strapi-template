@@ -1,6 +1,6 @@
 ---
 name: content-freshness
-description: Use for cache invalidation and content freshness between Strapi and the web app — on-demand revalidation, the signed webhook from CMS, the Redis cache handler, and tag/path revalidation. Trigger words: revalidate, revalidateTag, revalidatePath, webhook, signed, HMAC, redis, cache handler, ISR, freshness, stale, on-demand.
+description: Use for cache invalidation and content freshness between Strapi and the web app — on-demand revalidation, the signed webhook from CMS, the ISR cache, and tag/path revalidation. Trigger words: revalidate, revalidateTag, revalidatePath, webhook, signed, HMAC, cache, ISR, freshness, stale, on-demand.
 ---
 
 # Content freshness (CMS → web)
@@ -11,8 +11,9 @@ When Strapi content changes, the web app must reflect it fast without a full reb
   to a web revalidation route.
 - The route maps the changed entity to Next cache **tags/paths** and calls
   `revalidateTag` / `revalidatePath`. Fetches must be tagged consistently for this to work.
-- A **Redis cache handler** backs Next's data cache so revalidation is shared across
-  instances, not per-process.
+- The cache is Next's own **per-instance ISR cache**. The app runs as a single instance
+  ([ADR-008](../../../docs/adr/008-single-instance.md)), so revalidating here
+  invalidates the cache that serves traffic. Adding a replica breaks this silently.
 
 Full design and the exact tag scheme: **`docs/p3-freshness.md`** — read it before changing
 webhook or tagging logic.

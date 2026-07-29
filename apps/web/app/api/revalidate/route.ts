@@ -17,8 +17,9 @@ import { clientKey, rateLimit } from "@/lib/rate-limit";
  *
  * Flow: Strapi lifecycle → signed POST here → verify HMAC → map the changed
  * entry to §5.2 cache tags → `revalidateTag()` (+ `revalidatePath()` for the
- * detail routes). Because the cache is Redis-backed (`cache-handler.mjs`), the
- * revalidation is cluster-wide: every web instance sees it, not just this one.
+ * detail routes). The cache is Next's own per-instance ISR cache, and this app
+ * runs as a single instance (ADR-008), so invalidating it here invalidates the
+ * cache that actually serves traffic.
  *
  * This route does NOT rebuild or redeploy — it only marks cache tags stale, so
  * the next request regenerates from the CMS. Content freshness with zero build.

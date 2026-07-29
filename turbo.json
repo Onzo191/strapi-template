@@ -22,7 +22,19 @@
         ".strapi/**",
         "types/generated/**"
       ],
-      "env": ["NEXT_PUBLIC_*", "DATABASE_CLIENT", "STRAPI_ADMIN_BACKEND_URL"]
+      // Turbo runs tasks in strict env mode, so anything the build *reads* must be
+      // declared here or it is stripped before the task ever sees it. The web
+      // prerender fetches the CMS at build time (§5.1), and apps/web/Dockerfile
+      // passes STRAPI_URL/CDN_URL as build args — undeclared, they are silently
+      // dropped and the image prerenders against the localhost default instead.
+      "env": [
+        "NEXT_PUBLIC_*",
+        "DATABASE_CLIENT",
+        "STRAPI_ADMIN_BACKEND_URL",
+        "STRAPI_URL",
+        "STRAPI_API_TOKEN",
+        "CDN_URL"
+      ]
     },
     "typecheck": {
       "dependsOn": ["^build"],

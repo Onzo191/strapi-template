@@ -31,7 +31,7 @@ pnpm install                 # install workspace
 pnpm turbo run build         # build all apps (Turbo affected graph in CI)
 pnpm lint                    # Biome check
 pnpm typecheck               # tsc --noEmit across packages
-docker compose up            # boot postgres17 + redis + cms + web
+docker compose up            # boot postgres17 + cms + web
 ```
 
 - web → http://localhost:3000

@@ -25,7 +25,6 @@ app/
 │  └─ preview/route.ts, preview/exit/route.ts   draft mode          (§6.3)
 ├─ sitemap.ts  robots.ts  manifest.ts
 proxy.ts                            middleware: 301 redirects → locale routing
-cache-handler.mjs                   Redis-backed ISR cache (cluster-wide tags)
 ```
 
 `proxy.ts` is Next's middleware (named `proxy.ts` in Next 16). It resolves the
@@ -107,15 +106,16 @@ webhook that never arrived — never remove it in favour of "tags handle it".
   `docs/adr/007-csp-without-nonces.md`.
 - **`lib/rate-limit.ts` is per-instance** (in-process). It is a second-order brake
   behind the HMAC on `/api/revalidate` and a brute-force cost on `/api/preview` —
-  not a cluster-wide control. The CMS's limiter is the Redis-backed one.
+  not a cluster-wide control. The CMS's limiter is in-process too — sound only
+  because each app runs as one instance ([ADR-008](../../docs/adr/008-single-instance.md)).
 - **`STRAPI_PREVIEW_TOKEN` must be a full-access Strapi token.** The CMS's draft
   guard only lets that token type read unpublished content; a read-only token here
   fails silently by serving published copy in preview mode.
 
 ## Testing
 
-`docker compose up` first — `next dev` bypasses `cache-handler.mjs`, so ISR, tag
-invalidation and multi-instance behaviour cannot be validated against it.
+`docker compose up` first — `next dev` does not use the production ISR cache, so
+ISR and tag invalidation cannot be validated against it.
 
 ```bash
 pnpm --filter @vng/qa e2e         # Playwright: journeys, SEO, a11y, headers

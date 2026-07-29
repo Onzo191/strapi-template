@@ -6,19 +6,24 @@
 #   1. HMAC verification REJECTS unsigned / wrongly-signed webhook calls (401).
 #   2. A correctly-signed webhook is accepted (200) and reports the tags it
 #      revalidated.
-#   3. Multi-instance / cluster-wide freshness: an article published in the CMS
-#      becomes visible on BOTH web instances in under ~2s WITHOUT any rebuild —
-#      including `web2`, which never receives the webhook (only `web` does).
-#      That can only work because the ISR cache handler is Redis-backed.
+#   3. Content freshness: an article published in the CMS becomes visible on the
+#      site in under ~2s WITHOUT any rebuild — the publish webhook calls
+#      revalidateTag on the ISR cache that same instance serves from.
+#
+# Scope note: the stack runs a SINGLE web instance (ADR-008), so this proves
+# freshness for the cache that actually serves traffic. It cannot prove
+# cross-instance propagation, because there is no second instance — that is the
+# capability given up when the shared Redis cache handler was removed. If the web
+# app is ever scaled out, this script needs a second target again and the cache
+# has to become shared, or the assertion below stops meaning anything.
 #
 # Usage:
-#   docker compose up --build -d        # postgres + redis + cms + web + web2
+#   docker compose up --build -d        # postgres + cms + web
 #   # (wait for CMS to seed, ~30-60s on first boot)
 #   ./scripts/verify-revalidation.sh
 #
 # Env overrides:
-#   WEB1   (default http://localhost:3000)   instance that RECEIVES the webhook
-#   WEB2   (default http://localhost:3001)   instance that must stay consistent
+#   WEB    (default http://localhost:3000)
 #   STRAPI (default http://localhost:1337)
 #   SECRET (default dev-revalidate-secret-change-me)  must match both apps
 #   ADMIN_EMAIL + ADMIN_PASSWORD  a Strapi admin — enables the end-to-end
@@ -27,8 +32,7 @@
 #
 set -uo pipefail
 
-WEB1="${WEB1:-http://localhost:3000}"
-WEB2="${WEB2:-http://localhost:3001}"
+WEB="${WEB:-http://localhost:3000}"
 STRAPI="${STRAPI:-http://localhost:1337}"
 SECRET="${SECRET:-dev-revalidate-secret-change-me}"
 LOCALE="${LOCALE:-vi}"
@@ -43,11 +47,20 @@ FAILED=0
 # `$NF` grabs the trailing hex whether or not openssl prints a `(stdin)= ` prefix.
 sign() { openssl dgst -sha256 -hmac "$SECRET" | awk '{print "sha256="$NF}'; }
 
-status_of() { # $1=url $2=body $3=signature-header(optional)
-  local url="$1" body="$2" sig="${3:-}"
+# The signature covers `<unix-seconds>.<rawBody>`, not the body alone, and the
+# timestamp travels in its own header — see `signingPayload()` in
+# packages/shared/src/security/signature.ts. Binding the timestamp into the signed
+# string is what stops a captured request being replayed with a rewritten clock.
+sign_payload() { # $1=timestamp $2=body
+  printf '%s.%s' "$1" "$2" | sign
+}
+
+status_of() { # $1=url $2=body $3=signature-header(optional) $4=timestamp(optional)
+  local url="$1" body="$2" sig="${3:-}" ts="${4:-}"
   if [ -n "$sig" ]; then
     curl -s -o /dev/null -w '%{http_code}' -X POST "$url" \
-      -H 'content-type: application/json' -H "x-vng-signature: $sig" -d "$body"
+      -H 'content-type: application/json' \
+      -H "x-vng-signature: $sig" -H "x-vng-timestamp: $ts" -d "$body"
   else
     curl -s -o /dev/null -w '%{http_code}' -X POST "$url" \
       -H 'content-type: application/json' -d "$body"
@@ -56,16 +69,23 @@ status_of() { # $1=url $2=body $3=signature-header(optional)
 
 hr "1. HMAC verification"
 BODY='{"model":"article","documentId":"proof","slug":"proof","locale":"'"$LOCALE"'"}'
-SIG="$(printf '%s' "$BODY" | sign)"
+TS="$(date +%s)"
+SIG="$(sign_payload "$TS" "$BODY")"
 
-code="$(status_of "$WEB1$REVALIDATE_PATH" "$BODY")"
+code="$(status_of "$WEB$REVALIDATE_PATH" "$BODY")"
 [ "$code" = "401" ] && pass "unsigned request rejected (401)" || fail "unsigned request got $code, expected 401"
 
-code="$(status_of "$WEB1$REVALIDATE_PATH" "$BODY" "sha256=deadbeef")"
+code="$(status_of "$WEB$REVALIDATE_PATH" "$BODY" "sha256=deadbeef" "$TS")"
 [ "$code" = "401" ] && pass "bad-signature request rejected (401)" || fail "bad-signature got $code, expected 401"
 
-resp="$(curl -s -X POST "$WEB1$REVALIDATE_PATH" -H 'content-type: application/json' \
-  -H "x-vng-signature: $SIG" -d "$BODY")"
+# A valid signature over a timestamp outside the ±5-minute window must still be
+# rejected — that is the replay guard, and it is worth its own assertion.
+OLD_TS="$(( TS - 600 ))"
+code="$(status_of "$WEB$REVALIDATE_PATH" "$BODY" "$(sign_payload "$OLD_TS" "$BODY")" "$OLD_TS")"
+[ "$code" = "401" ] && pass "stale timestamp rejected (401)" || fail "stale timestamp got $code, expected 401"
+
+resp="$(curl -s -X POST "$WEB$REVALIDATE_PATH" -H 'content-type: application/json' \
+  -H "x-vng-signature: $SIG" -H "x-vng-timestamp: $TS" -d "$BODY")"
 if echo "$resp" | grep -q '"revalidated":true'; then
   pass "correctly-signed request accepted (200): $resp"
 else
@@ -76,7 +96,7 @@ fi
 now_ms() { node -e 'process.stdout.write(String(Date.now()))'; }
 
 # ---------------------------------------------------------------------------
-hr "2. Multi-instance content freshness (end-to-end publish)"
+hr "2. Content freshness (end-to-end publish, no rebuild)"
 if [ -z "${ADMIN_EMAIL:-}" ] || [ -z "${ADMIN_PASSWORD:-}" ]; then
   echo "  (skipped — set ADMIN_EMAIL + ADMIN_PASSWORD to run the real publish flow)"
 else
@@ -104,33 +124,36 @@ else
       echo "  article documentId=$DOC_ID slug=$SLUG"
       echo "  new title → \"$NEW_TITLE\""
 
-      # Warm both instances so they hold a cached copy first.
-      curl -s -o /dev/null "$WEB1$ART_URL"; curl -s -o /dev/null "$WEB2$ART_URL"
+      # Warm the instance so it holds a cached copy first — otherwise a fresh
+      # render would pass trivially without the webhook doing anything.
+      curl -s -o /dev/null "$WEB$ART_URL"
 
-      # Edit the draft, then PUBLISH — publish fires the webhook to `web` only.
+      # Edit the draft, then PUBLISH — publish fires the signed webhook.
       curl -s -o /dev/null -X PUT "$CM?locale=$LOCALE" \
         -H "Authorization: Bearer $JWT" -H 'content-type: application/json' \
         -d "{\"title\":\"$NEW_TITLE\"}"
       curl -s -o /dev/null -X POST "$CM/actions/publish?locale=$LOCALE" \
         -H "Authorization: Bearer $JWT" -H 'content-type: application/json'
 
-      # Poll BOTH instances until the new title appears; measure latency.
+      # Poll until the new title appears; measure latency.
       start="$(now_ms)"
-      seen1=0; seen2=0
+      seen=0
       for _ in $(seq 1 40); do   # up to ~10s (40 × 250ms)
-        [ "$seen1" -eq 0 ] && curl -s "$WEB1$ART_URL" | grep -q "$NEW_TITLE" && seen1=1
-        [ "$seen2" -eq 0 ] && curl -s "$WEB2$ART_URL" | grep -q "$NEW_TITLE" && seen2=1
-        if [ "$seen1" -eq 1 ] && [ "$seen2" -eq 1 ]; then break; fi
+        curl -s "$WEB$ART_URL" | grep -q "$NEW_TITLE" && seen=1
+        [ "$seen" -eq 1 ] && break
         sleep 0.25
       done
       elapsed=$(( $(now_ms) - start ))
 
-      [ "$seen1" -eq 1 ] && pass "web  (got webhook)       fresh in ${elapsed}ms" || fail "web  never went fresh"
-      [ "$seen2" -eq 1 ] && pass "web2 (NO webhook, Redis)  fresh in ${elapsed}ms" || fail "web2 never went fresh (Redis propagation broken)"
-      if [ "$seen1" -eq 1 ] && [ "$seen2" -eq 1 ] && [ "$elapsed" -le 3000 ]; then
-        pass "both instances fresh in ${elapsed}ms (< 3s target)"
-      elif [ "$seen1" -eq 1 ] && [ "$seen2" -eq 1 ]; then
-        fail "both fresh but took ${elapsed}ms (> 3s)"
+      if [ "$seen" -eq 1 ]; then
+        pass "published content fresh in ${elapsed}ms (no rebuild)"
+        if [ "$elapsed" -le 3000 ]; then
+          pass "within the < 3s target"
+        else
+          fail "fresh but took ${elapsed}ms (> 3s)"
+        fi
+      else
+        fail "content never went fresh — webhook or cache-tag wiring is broken"
       fi
     fi
   fi

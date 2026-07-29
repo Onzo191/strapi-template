@@ -28,9 +28,9 @@
       "description": "Use when working in apps/cms — Strapi 5 content-types, schemas, controllers/services, seed data, plugins, or the editorial/audit workflow. Trigger words: Strapi, content-type, schema.json, seed, bootstrap, plugin, admin, collection, single-type, component, dynamic zone, lifecycle."
     },
     "content-freshness": {
-      "integrity": "sha256:6e11653ef1de28c81f96db16b70f7b10436a1b11f92dacac06ac537936c1c4b6",
-      "bytes": 1166,
-      "description": "Use for cache invalidation and content freshness between Strapi and the web app — on-demand revalidation, the signed webhook from CMS, the Redis cache handler, and tag/path revalidation. Trigger words: revalidate, revalidateTag, revalidatePath, webhook, signed, HMAC, redis, cache handler, ISR, freshness, stale, on-demand."
+      "integrity": "sha256:c76a267b470c2e96b20f539a6d7e63876976183e413b33808bcacb8a1a610010",
+      "bytes": 1276,
+      "description": "Use for cache invalidation and content freshness between Strapi and the web app — on-demand revalidation, the signed webhook from CMS, the ISR cache, and tag/path revalidation. Trigger words: revalidate, revalidateTag, revalidatePath, webhook, signed, HMAC, cache, ISR, freshness, stale, on-demand."
     },
     "design-system": {
       "integrity": "sha256:996679642f30b3d4fbfca46875245a2314e330913871572aef9c3c41356e29d4",
@@ -48,18 +48,18 @@
       "description": "Use when writing or running end-to-end tests and quality gates — Playwright specs in qa/e2e, the Playwright config, and Lighthouse CI (performance/SEO/a11y budgets). Trigger words: Playwright, e2e, test spec, lighthouse, lighthouserc, performance budget, accessibility, CI check, playwright-report."
     },
     "security": {
-      "integrity": "sha256:766aa19204d9c45f0b6ec4b746649fb5207e4826df40470f64e0725cb90c3356",
-      "bytes": 12133,
+      "integrity": "sha256:cf1679def61913142e00f35467200892ba253090669e62b404a1c9d90cff594f",
+      "bytes": 12671,
       "description": "Security conventions and invariants for both apps — Content-API auth, the draft-read guard, CSP and security headers, rate limiting, admin session lifetimes, OIDC SSO/MFA, upload virus scanning, signed webhooks and secret handling. Use when touching auth, permissions, CSP/headers, rate limits, SSO, sessions, uploads, secrets, or when asked to review or harden security. Trigger words: XSS, CSRF, injection, CSP, header, auth, token, permission, rate limit, session, SSO, OIDC, MFA, secret, virus scan, HMAC, draft leak."
     },
     "seo-aio": {
-      "integrity": "sha256:ed2475313c89d82e69f763034b85d5584d5dde84f57b2037279e295f7755571f",
-      "bytes": 4590,
+      "integrity": "sha256:1a6517df780cb8b83d03d696295536d5503bca2e0fd5f601babca3956c29fb2b",
+      "bytes": 4580,
       "description": "Use for SEO / AI-optimization work in apps/web — page metadata, Open Graph, JSON-LD structured data, sitemap.xml, robots, canonical + hreflang alternates, redirects, and preview links. Trigger words: metadata, generateMetadata, JSON-LD, schema.org, sitemap, robots, canonical, hreflang, alternates, Open Graph, og:image, redirect, 301, preview."
     },
     "wire-revalidation-webhook": {
-      "integrity": "sha256:d42ff744720591236c7f3b42c22e09a68c63035fe76ec8fcd6d481e841381ecf",
-      "bytes": 7458,
+      "integrity": "sha256:cabd3ce2a93ee646f2dd95cd426c1663c676a25b3d81da478faa94d8cb1f1f8f",
+      "bytes": 7874,
       "description": "Step-by-step recipe for wiring content freshness — the Strapi document-service middleware that fires a signed webhook, the cache-tag mapping, and the Next Route Handler that calls revalidateTag. Use when content does not appear on the site after publishing, when adding a content type to the freshness path, or when changing/debugging the revalidation webhook, HMAC signing or cache tags."
     }
   }

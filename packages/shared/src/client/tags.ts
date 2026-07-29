@@ -81,9 +81,9 @@ export interface RevalidatePayload {
  * enriched the payload with the relation slugs, to match the §5.2 table.
  *
  * `tagSlugs` is capped (P7): it is the only unbounded field in the payload, and
- * each entry becomes a separate `revalidateTag` call plus a Redis round-trip in
- * the cache handler. A payload claiming 100k tags would turn one authenticated
- * webhook into a self-inflicted Redis flood. Real articles carry a handful.
+ * each entry becomes a separate `revalidateTag` call. A payload claiming 100k
+ * tags would turn one authenticated webhook into a self-inflicted flood of cache
+ * invalidations. Real articles carry a handful.
  */
 const MAX_TAG_SLUGS = 64;
 
