@@ -17,7 +17,7 @@
   "attributes": {
     "action": { "type": "string", "required": true },
     "contentType": { "type": "string" },
-    "documentId": { "type": "string" },
+    "entryDocumentId": { "type": "string" },
     "locale": { "type": "string" },
     "entryTitle": { "type": "string" },
     "actorId": { "type": "integer" },

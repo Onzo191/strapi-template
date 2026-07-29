@@ -6,7 +6,8 @@
     "e2e": "playwright test",
     "lighthouse": "lhci autorun",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "load:revalidate": "node ./load/revalidate-load.mjs"
   },
   "devDependencies": {
     "@lhci/cli": "0.15.1",

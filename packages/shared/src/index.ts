@@ -23,6 +23,8 @@ export {
 } from "./population";
 // Zod schemas per block (P2 §4.2) — defensive validation in the FE block registry.
 export * from "./schemas";
+// Security primitives (P7 §9) — URL/href safety, CSV escaping, signed webhooks.
+export * from "./security";
 export * from "./types/blocks";
 export * from "./types/components";
 export * from "./types/content-types";

@@ -3,7 +3,7 @@
 **Deliverable:** Plan only (no full application code).
 **Stack:** Strapi 5 (Community, headless) + Next.js 16 (App Router / RSC / React 19), pnpm 10 workspaces, Turborepo (remote cache), Biome, Lefthook, Docker, AWS.
 **Reference starter:** [notum-cz/strapi-next-monorepo-starter](https://github.com/notum-cz/strapi-next-monorepo-starter) — adapt heavily; single required deviation = **Biome replaces ESLint + Prettier**.
-**Business context:** VNG Website Revamp (`vng.com.vn`) — CMS-driven corporate site, VI/EN, thousands of articles, first-class SEO/AIO, admin autonomy, hard launch window (soft launch ~20/09/2026). See [master_summary.md](docs/master_summary.md) and [website-req_details.md](docs/website-req_details.md).
+**Business context:** VNG Website Revamp (`vng.com.vn`) — CMS-driven corporate site, VI/EN, thousands of articles, first-class SEO/AIO, admin autonomy, hard launch window (soft launch ~20/09/2026). See [master_summary.md](master_summary.md) and [website-req_details.md](website-req_details.md).
 
 ---
 
@@ -261,7 +261,7 @@ sequenceDiagram
 | draft/preview | Strapi Draft & Publish + preview token | Next **draft mode** route |
 | scheduled publish | Strapi scheduled publishing | webhook fires at publish time |
 
-Covers the SEO/AIO backlog from [master_summary.md](docs/master_summary.md) §5 (noindex cleanup, canonical www/non-www, 404→301 map, hreflang, Org/Breadcrumb/FAQ/NewsArticle schema, dynamic sitemap, CWV).
+Covers the SEO/AIO backlog from [master_summary.md](master_summary.md) §5 (noindex cleanup, canonical www/non-www, 404→301 map, hreflang, Org/Breadcrumb/FAQ/NewsArticle schema, dynamic sitemap, CWV).
 
 ### 6.4 Performance (Lighthouse 95–100)
 - RSC-first; `'use client'` only for interactive islands (carousels, forms, theme toggle, menus).
@@ -411,7 +411,7 @@ jobs:
 | **P6 — AWS + CI/CD** (wk 5–6) | Deployable infra | Terraform ECS/RDS/Redis/S3/CloudFront/Secrets; change-detection pipeline deploys FE-only/BE-only/both; migrations + rollback proven on staging; blue-green. |
 | **P7 — Hardening + UAT** (wk 6–7) | Launch-ready | Security review passed (XSS/CSRF/injection, rate limit, session timeout); SSO/MFA + virus scan wired; docs/ADRs/recipes complete; **soft launch ~20/09/2026**. |
 
-*(Weeks are relative sequencing, not calendar commitments; map onto the project's 01/07–20/09 window per [master_summary.md](docs/master_summary.md).)*
+*(Weeks are relative sequencing, not calendar commitments; map onto the project's 01/07–20/09 window per [master_summary.md](master_summary.md).)*
 
 ---
 

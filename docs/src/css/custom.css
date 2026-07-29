@@ -1,0 +1,30 @@
+/* Minimal overrides — the classic theme's defaults are fine for an internal handbook.
+   Kept small on purpose: this site's job is to be readable, not branded. */
+:root {
+  --ifm-color-primary: #0b6bcb;
+  --ifm-color-primary-dark: #0a60b7;
+  --ifm-color-primary-darker: #095bad;
+  --ifm-color-primary-darkest: #084b8f;
+  --ifm-color-primary-light: #0c76df;
+  --ifm-color-primary-lighter: #0d7be9;
+  --ifm-color-primary-lightest: #1f8bf5;
+  --ifm-code-font-size: 92%;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #6ab7ff;
+  --ifm-color-primary-dark: #47a6ff;
+  --ifm-color-primary-darker: #359dff;
+  --ifm-color-primary-darkest: #0083ff;
+  --ifm-color-primary-light: #8dc8ff;
+  --ifm-color-primary-lighter: #9fd1ff;
+  --ifm-color-primary-lightest: #d4eaff;
+}
+
+/* The ADRs and the architecture plan lean on wide comparison tables; let them scroll
+   rather than squeezing columns to unreadable widths. */
+.markdown table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}

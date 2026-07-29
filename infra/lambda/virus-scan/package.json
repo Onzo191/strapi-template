@@ -1,0 +1,10 @@
+{
+  "name": "vng-virus-scan-lambda",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "S3 ObjectCreated -> ClamAV scan -> signed verdict callback to the CMS (Req §2, §0 A6).",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.716.0"
+  }
+}

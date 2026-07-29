@@ -18,6 +18,15 @@ export default ({ env }) => ({
     resolve: "./src/plugins/editorial",
   },
 
+  // Local custom plugin (§9 P7 / Req §8): admin SSO via OIDC + MFA assurance.
+  // Always loaded; it self-disables (and logs) when the OIDC_* env vars are
+  // absent, so a missing IdP config is a visible warning rather than a silently
+  // missing route.
+  sso: {
+    enabled: true,
+    resolve: "./src/plugins/sso",
+  },
+
   ...(env("AWS_BUCKET")
     ? {
         upload: {

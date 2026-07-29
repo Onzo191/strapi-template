@@ -68,6 +68,45 @@ services:
       # multi-instance behaviour we're proving.
       WEB_REVALIDATE_URL: http://web:3000/api/revalidate
       REVALIDATE_SECRET: dev-revalidate-secret-change-me
+      # ── P7 hardening (§9) ────────────────────────────────────────────────
+      # The Content API is token-authenticated here, exactly as in prod: this
+      # token is provisioned on boot and `web` below reads with it. Running the
+      # authenticated path locally is the point — an auth model that is only
+      # exercised in production is an auth model nobody has tested.
+      STRAPI_READONLY_API_TOKEN: dev-readonly-token-0123456789abcdef0123456789
+      CMS_PUBLIC_READ: "false"
+      # Redis-backed cluster-wide rate limiting (same instance as the ISR cache,
+      # separate key prefix).
+      REDIS_URL: redis://redis:6379
+      # Both apps are reached directly on the compose network, so XFF carries no
+      # trusted hop; keying on ctx.request.ip is correct here.
+      TRUSTED_PROXY_HOPS: "1"
+      # CORS + admin-CSP allow-list. Both web instances, since either may be the
+      # browser's origin when testing multi-instance behaviour.
+      WEB_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      # Admin cookies must not be Secure over plain http, or login cannot
+      # complete — NODE_ENV=production above would otherwise make them Secure.
+      ADMIN_COOKIE_SECURE: "false"
+      # No outbound calls from a local stack.
+      STRAPI_TELEMETRY_DISABLED: "true"
+      FLAG_NPS: "false"
+      FLAG_PROMOTE_EE: "false"
+      # Inline upload scanning (Req §2, §0 A6). OFF by default locally: the
+      # official clamav image is amd64-only, so on an Apple Silicon machine it
+      # runs under emulation and takes minutes to load ~250 MB of signatures —
+      # too slow to make every `docker compose up` wait on it. To exercise it:
+      #
+      #   CLAMAV_HOST=clamav docker compose --profile scan up
+      #
+      # In AWS, clamd is a sidecar container in the CMS task definition and this
+      # is always set (see docs/adr/005-security-hardening.md).
+      CLAMAV_HOST: ${CLAMAV_HOST:-}
+      CLAMAV_PORT: "3310"
+      # Fail closed, as in prod: an unreachable scanner rejects the upload. Only
+      # applies when CLAMAV_HOST is set at all.
+      UPLOAD_SCAN_FAIL_OPEN: "false"
+      # SSO is off locally (no IdP). See apps/cms/.env.example to wire one.
+      OIDC_ENFORCE: "false"
     ports:
       - "1337:1337"
     volumes:
@@ -77,6 +116,32 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # ClamAV daemon for inline upload scanning (Req §2, §0 A6). In AWS this is a
+  # sidecar container in the CMS's ECS task definition, reachable over localhost;
+  # here it is a compose service reachable as `clamav`.
+  #
+  # Behind the `scan` profile, so it does not run unless asked for:
+  #
+  #   CLAMAV_HOST=clamav docker compose --profile scan up
+  #
+  # `platform` is pinned because upstream publishes **amd64 only** — without it,
+  # `docker compose up` fails outright on an arm64 host rather than falling back
+  # to emulation. Under emulation the first boot takes several minutes to load the
+  # signature database, hence the long `start_period` and the profile.
+  clamav:
+    profiles: ["scan"]
+    image: clamav/clamav:1.4
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      - clamavdb:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 600s
 
   # Two web instances behind a SHARED Redis (§A2). The webhook only ever hits
   # `web`; `web2` must still go fresh via Redis — that's the P3 proof.
@@ -95,6 +160,12 @@ services:
       REDIS_URL: redis://redis:6379
       # Must match the CMS's REVALIDATE_SECRET to accept signed webhooks.
       REVALIDATE_SECRET: dev-revalidate-secret-change-me
+      # P7 (§9): the Content API is token-authenticated. Same value the CMS
+      # provisions as STRAPI_READONLY_API_TOKEN.
+      STRAPI_API_TOKEN: dev-readonly-token-0123456789abcdef0123456789
+      # No embeds allow-listed locally ⇒ CSP `frame-src 'none'`. Add origins here
+      # to test the `embed` block against a real IR/BU property.
+      EMBED_ALLOWED_ORIGINS: ""
     ports:
       - "3000:3000"
     depends_on:
@@ -121,3 +192,5 @@ volumes:
   pgdata:
   redisdata:
   cmsuploads:
+  # Persisted so a container restart doesn't re-download ~250 MB of signatures.
+  clamavdb:

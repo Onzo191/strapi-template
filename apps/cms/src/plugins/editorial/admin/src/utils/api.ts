@@ -24,7 +24,7 @@ export interface AuditRow {
   timestamp: string;
   action: string;
   contentType: string | null;
-  documentId: string | null;
+  entryDocumentId: string | null;
   locale: string | null;
   entryTitle: string | null;
   fromStatus: string | null;

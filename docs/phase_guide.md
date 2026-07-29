@@ -1,6 +1,6 @@
 # VNG Platform — Phase-by-Phase Build Guide (Agent Prompts + Model Picks)
 
-Companion to [architecture_plan.md](docs/architecture_plan.md). For each phase: **goal → recommended model (why) → copy-paste English prompt → done when**.
+Companion to [architecture_plan.md](architecture_plan.md). For each phase: **goal → recommended model (why) → copy-paste English prompt → done when**.
 
 ## How to use this
 - Run phases **in order** (P0 → P7). Each prompt assumes the previous phase is merged.

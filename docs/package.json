@@ -1,0 +1,38 @@
+{
+  "name": "@vng/docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Docusaurus site for the platform handbook — ADRs + reference docs (§7).",
+  "scripts": {
+    "dev": "docusaurus start --port 3100",
+    "start": "docusaurus start --port 3100",
+    "build": "docusaurus build",
+    "serve": "docusaurus serve --port 3100",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "clear": "docusaurus clear"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-mermaid": "3.10.2",
+    "@mdx-js/react": "^3.1.0",
+    "clsx": "^2.1.1",
+    "prism-react-renderer": "^2.4.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "browserslist": {
+    "production": [">0.5%", "not dead", "not op_mini all"],
+    "development": ["last 3 chrome version", "last 3 firefox version", "last 5 safari version"]
+  }
+}

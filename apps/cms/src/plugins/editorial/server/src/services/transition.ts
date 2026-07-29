@@ -89,7 +89,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       .record({
         action: def.action,
         contentType: uid,
-        documentId,
+        entryDocumentId: documentId,
         locale: locale ?? null,
         entryTitle: current.title ?? current.slug ?? null,
         actorId: user?.id ?? null,

@@ -34,6 +34,15 @@ interface RedirectRow {
   statusCode: number | null;
 }
 
+/**
+ * Hard ceiling on pages fetched per refresh (100 rows each). The real table is
+ * ~297 rows (Req §6), so 50 pages is ~17× headroom. It exists because this loop
+ * runs *inside middleware*: without a bound, a mis-seeded or maliciously bulk-
+ * inserted redirect table would make every cold request page through the whole
+ * collection before rendering anything.
+ */
+const MAX_PAGES = 50;
+
 /** Normalize a pathname for matching: ensure leading slash, drop trailing slash. */
 export function normalizeRedirectPath(path: string): string {
   let p = path.trim();
@@ -73,6 +82,7 @@ export function createRedirectResolver(config: RedirectResolverConfig) {
         });
       }
       if (page >= (json.meta?.pagination?.pageCount ?? 1)) break;
+      if (page >= MAX_PAGES) break;
     }
     return map;
   }

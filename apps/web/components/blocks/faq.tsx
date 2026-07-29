@@ -1,5 +1,6 @@
 import type { FaqBlock } from "@vng/shared";
 import { ChevronDown } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
 
 /** Renders as native `<details>` (no client JS needed) + FAQPage JSON-LD (§6.3). */
 export function Faq(block: FaqBlock) {
@@ -33,11 +34,14 @@ export function Faq(block: FaqBlock) {
             </details>
           ))}
         </div>
-        <script
-          type="application/ld+json"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: fixed JSON-LD payload built from validated block data, not user HTML
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        {/*
+          Emitted through `JsonLd`, not a local `dangerouslySetInnerHTML`: the
+          question/answer strings are editor-authored, so an answer containing
+          `</script><script>…` would otherwise break out of the JSON-LD block and
+          execute. `JsonLd` escapes `<` to `<`, which JSON parsers accept and
+          the HTML tokenizer cannot see as a tag.
+        */}
+        <JsonLd data={jsonLd} />
       </div>
     </section>
   );

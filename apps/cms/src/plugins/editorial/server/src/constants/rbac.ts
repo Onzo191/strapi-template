@@ -66,6 +66,15 @@ export const ACTION_ALLOWED_ROLES: Record<string, string[]> = {
   restore: [editor, admin, masterAdmin],
   // Hard delete of content / audit rows: only the most privileged roles.
   hardDelete: [masterAdmin],
+
+  // Reading the audit trail is itself sensitive: rows carry actor emails,
+  // rejection comments and entry titles of unpublished work, so the log doubles
+  // as a directory of who is working on what embargoed material. Restricted to
+  // the oversight roles — a Contributor has no business reading it, and the
+  // routes were previously open to any authenticated admin user (P7 finding).
+  auditRead: [editor, admin, masterAdmin],
+  // The CSV/JSON export is the bulk-exfiltration shape of the same data.
+  auditExport: [admin, masterAdmin],
 };
 
 /** Does any of the actor's role codes permit `action`? */

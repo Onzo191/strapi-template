@@ -34,6 +34,11 @@ COPY packages/design-system/package.json   packages/design-system/
 COPY packages/config-biome/package.json    packages/config-biome/
 COPY packages/config-tsconfig/package.json packages/config-tsconfig/
 COPY qa/package.json                       qa/
+# NOTE: `docs/package.json` is deliberately absent. `docs/` is a pnpm workspace (the
+# Docusaurus handbook) but is excluded by `.dockerignore`, so its manifest never reaches
+# the build context and its ~400 MB of dev dependencies never enter this image.
+# `--frozen-lockfile` tolerates the missing importer; if a future pnpm makes that an
+# error, filter it out (`--filter '!@vng/docs'`) rather than copying the manifest in.
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile
 

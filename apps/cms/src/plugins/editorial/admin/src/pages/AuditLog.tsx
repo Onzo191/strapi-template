@@ -162,7 +162,9 @@ const AuditLogPage = () => {
                     <Typography variant="pi">{(row.contentType ?? "").split(".").pop()}</Typography>
                   </Td>
                   <Td>
-                    <Typography variant="pi">{row.entryTitle ?? row.documentId ?? "—"}</Typography>
+                    <Typography variant="pi">
+                      {row.entryTitle ?? row.entryDocumentId ?? "—"}
+                    </Typography>
                   </Td>
                   <Td>
                     <Typography variant="pi">

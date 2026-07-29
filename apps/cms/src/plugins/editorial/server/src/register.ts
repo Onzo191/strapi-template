@@ -40,7 +40,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
           .record({
             action: label,
             contentType: context.uid,
-            documentId: params.documentId ?? res?.documentId ?? null,
+            entryDocumentId: params.documentId ?? res?.documentId ?? null,
             locale: params.locale ?? null,
             actorId: user?.id ?? null,
             actorEmail: user?.email ?? null,

@@ -9,6 +9,19 @@
     "displayName": "Editorial",
     "description": "Content workflow, RBAC-gated transitions and an immutable audit log."
   },
+  "_comment_exports": [
+    "`./strapi-server` MUST point at ./strapi-server.js — a hand-written CommonJS",
+    "bridge in this directory (see that file for the full reasoning). Strapi joins",
+    "this target onto path.resolve(dirs.app.root, resolve), and the app root is the",
+    "PROJECT root, whose src/ tree is TypeScript. A .ts target makes the entrypoint",
+    "path not-exist, and Strapi's loader skips a missing entrypoint SILENTLY — the",
+    "plugin never loads and nothing at all is logged.",
+    "",
+    "`./strapi-admin` stays on the .ts: it is consumed by the Vite admin build,",
+    "which reads TypeScript source. apps/cms/tsconfig.json deliberately EXCLUDES",
+    "src/plugins/*/admin and src/plugins/*/strapi-admin.ts from the server compile,",
+    "so there is no .js to point at — by design."
+  ],
   "exports": {
     "./package.json": "./package.json",
     "./strapi-admin": {
@@ -18,12 +31,6 @@
       "require": "./strapi-admin.ts",
       "default": "./strapi-admin.ts"
     },
-    "./strapi-server": {
-      "types": "./strapi-server.ts",
-      "source": "./strapi-server.ts",
-      "import": "./strapi-server.ts",
-      "require": "./strapi-server.ts",
-      "default": "./strapi-server.ts"
-    }
+    "./strapi-server": "./strapi-server.js"
   }
 }

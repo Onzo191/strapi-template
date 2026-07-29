@@ -1,0 +1,66 @@
+{
+  "lockfileVersion": 1,
+  "skillsDir": ".claude/skills",
+  "skills": {
+    "add-content-type": {
+      "integrity": "sha256:5d73c5a745a75fbccc9ca4d3307a1706424190ad42f0a6964a0aaa3ae5887278",
+      "bytes": 8552,
+      "description": "Step-by-step recipe for adding a Strapi content type end to end — schema, smart population, TS types, cache tags, revalidation webhook, public permissions, routing and seed. Use when asked to add or extend a content type / collection / single type (e.g. \"add an Event type\", \"add a Press Release collection\", \"add a new single type for careers\")."
+    },
+    "add-language": {
+      "integrity": "sha256:e952792de5807e73f6fc3e91580097c56273293e1bc5e94c977f32fc292e580e",
+      "bytes": 5389,
+      "description": "Step-by-step recipe for adding a locale end to end — next-intl routing, a message catalogue, the Strapi i18n locale, hreflang/sitemap alternates, translated slugs and the locale switcher. Use when asked to add or change a language / locale (e.g. \"add Japanese\", \"add zh-TW for the Taiwan market\", \"make Korean the default\")."
+    },
+    "add-page-builder-block": {
+      "integrity": "sha256:7f17e575d1066ff551c38691032368922215095996aef1f773d9c17342bc0c3c",
+      "bytes": 7383,
+      "description": "Step-by-step recipe for adding a page-builder block — a Strapi component, its Zod schema and TS type in @vng/shared, the React renderer, and the block-registry entry. Use when asked to add or change a CMS block / section / dynamic-zone entry (e.g. \"add a pricing-table block\", \"add a video hero\", \"add a stats band editors can drop into a page\")."
+    },
+    "add-theme": {
+      "integrity": "sha256:c4a381a41c3112032f04aab788214440571449e73c952ed4f5ac5d64dd38fb36",
+      "bytes": 4843,
+      "description": "Step-by-step recipe for adding a named theme — a design-token set in globals.css, the THEMES registry, next-themes wiring and the theme-toggle entry. Use when asked to add or change a theme / colour scheme / dark mode variant / high-contrast mode (e.g. \"add a sepia theme\", \"add a Tet campaign theme\", \"make the contrast theme WCAG AAA\")."
+    },
+    "cms-strapi": {
+      "integrity": "sha256:8d5c488dd173825fc47ecb3ce4612c7937886f338b829ec7153c4307a50f6015",
+      "bytes": 1410,
+      "description": "Use when working in apps/cms — Strapi 5 content-types, schemas, controllers/services, seed data, plugins, or the editorial/audit workflow. Trigger words: Strapi, content-type, schema.json, seed, bootstrap, plugin, admin, collection, single-type, component, dynamic zone, lifecycle."
+    },
+    "content-freshness": {
+      "integrity": "sha256:6e11653ef1de28c81f96db16b70f7b10436a1b11f92dacac06ac537936c1c4b6",
+      "bytes": 1166,
+      "description": "Use for cache invalidation and content freshness between Strapi and the web app — on-demand revalidation, the signed webhook from CMS, the Redis cache handler, and tag/path revalidation. Trigger words: revalidate, revalidateTag, revalidatePath, webhook, signed, HMAC, redis, cache handler, ISR, freshness, stale, on-demand."
+    },
+    "design-system": {
+      "integrity": "sha256:996679642f30b3d4fbfca46875245a2314e330913871572aef9c3c41356e29d4",
+      "bytes": 2784,
+      "description": "Use when adding or editing UI components in packages/design-system, or CMS page-builder blocks in apps/web/components/blocks. Covers the shadcn/ui + Radix + CVA + Tailwind v4 conventions, design tokens, theming, motion, and how a block gets wired into the registry. Trigger words: component, block, button/card/dialog/form, variant, className, cn, cva, tokens, dark mode, theme, motion, Reveal."
+    },
+    "i18n-routing": {
+      "integrity": "sha256:1eaae502dfbd81aa29ae080349d38b6e6e6aea2f328372867e6eb140c64d859b",
+      "bytes": 1202,
+      "description": "Use for localization and locale routing in apps/web — next-intl setup, the [locale] segment, message catalogs in apps/web/messages/*.json (en/vi), locale switching, and translated slugs. Trigger words: i18n, locale, next-intl, translation, messages, en.json, vi.json, useTranslations, getTranslations, locale switcher, hreflang slugs."
+    },
+    "qa-e2e": {
+      "integrity": "sha256:d6a843098b099ec5243146111f6dce51f7431ae24ec87c0e95c2e71b509f7fd0",
+      "bytes": 979,
+      "description": "Use when writing or running end-to-end tests and quality gates — Playwright specs in qa/e2e, the Playwright config, and Lighthouse CI (performance/SEO/a11y budgets). Trigger words: Playwright, e2e, test spec, lighthouse, lighthouserc, performance budget, accessibility, CI check, playwright-report."
+    },
+    "security": {
+      "integrity": "sha256:766aa19204d9c45f0b6ec4b746649fb5207e4826df40470f64e0725cb90c3356",
+      "bytes": 12133,
+      "description": "Security conventions and invariants for both apps — Content-API auth, the draft-read guard, CSP and security headers, rate limiting, admin session lifetimes, OIDC SSO/MFA, upload virus scanning, signed webhooks and secret handling. Use when touching auth, permissions, CSP/headers, rate limits, SSO, sessions, uploads, secrets, or when asked to review or harden security. Trigger words: XSS, CSRF, injection, CSP, header, auth, token, permission, rate limit, session, SSO, OIDC, MFA, secret, virus scan, HMAC, draft leak."
+    },
+    "seo-aio": {
+      "integrity": "sha256:ed2475313c89d82e69f763034b85d5584d5dde84f57b2037279e295f7755571f",
+      "bytes": 4590,
+      "description": "Use for SEO / AI-optimization work in apps/web — page metadata, Open Graph, JSON-LD structured data, sitemap.xml, robots, canonical + hreflang alternates, redirects, and preview links. Trigger words: metadata, generateMetadata, JSON-LD, schema.org, sitemap, robots, canonical, hreflang, alternates, Open Graph, og:image, redirect, 301, preview."
+    },
+    "wire-revalidation-webhook": {
+      "integrity": "sha256:d42ff744720591236c7f3b42c22e09a68c63035fe76ec8fcd6d481e841381ecf",
+      "bytes": 7458,
+      "description": "Step-by-step recipe for wiring content freshness — the Strapi document-service middleware that fires a signed webhook, the cache-tag mapping, and the Next Route Handler that calls revalidateTag. Use when content does not appear on the site after publishing, when adding a content type to the freshness path, or when changing/debugging the revalidation webhook, HMAC signing or cache tags."
+    }
+  }
+}

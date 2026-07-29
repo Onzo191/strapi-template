@@ -54,9 +54,33 @@ function initialValues(fields: FieldDef[]): Record<string, string | boolean> {
   );
 }
 
+/**
+ * The submit target is editor-configurable, and the submitted values are visitor
+ * PII (name, email, message). An absolute URL here would POST that PII straight
+ * to a third party from the visitor's own browser — a data-exfiltration path that
+ * needs no code change and leaves no trace in our logs. So only a same-origin
+ * path is accepted; CSP `connect-src 'self'` is the browser-side backstop for
+ * the same rule.
+ */
+function safeEndpoint(endpoint: string | null | undefined): string | null {
+  if (!endpoint) return null;
+  const value = endpoint.trim();
+  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[ContactForm] ignoring non-same-origin endpoint ${JSON.stringify(endpoint)} — ` +
+          "use a path like /api/contact",
+      );
+    }
+    return null;
+  }
+  return value;
+}
+
 /** Newsletter / contact form (§4.2) — RHF + Zod, reusing `ContactFormBlock`'s CMS-defined fields. */
 export function ContactForm(block: ContactFormBlock) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const endpoint = safeEndpoint(block.endpoint);
   const schema = useMemo(() => buildSchema(block.fields), [block.fields]);
   // Zod's input type (pre-default, e.g. optional string may be `undefined`) is what RHF
   // stores per-field; the output type (post-default/refine) is what the resolver hands
@@ -70,15 +94,19 @@ export function ContactForm(block: ContactFormBlock) {
   });
 
   async function onSubmit(values: OutputValues) {
-    if (!block.endpoint) {
+    if (!endpoint) {
       setStatus("success");
       return;
     }
     setStatus("submitting");
     try {
-      const res = await fetch(block.endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Same-origin only (enforced by `safeEndpoint`), so no credentials
+        // travel cross-site and the browser's own SameSite cookie rules are
+        // the CSRF control for the receiving handler.
+        credentials: "same-origin",
         body: JSON.stringify(values),
       });
       setStatus(res.ok ? "success" : "error");

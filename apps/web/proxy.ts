@@ -1,4 +1,4 @@
-import { createRedirectResolver } from "@vng/shared";
+import { createRedirectResolver, safeRedirect } from "@vng/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
@@ -19,7 +19,21 @@ const redirects = createRedirectResolver({
 export default async function proxy(request: NextRequest) {
   const hit = await redirects.resolve(request.nextUrl.pathname);
   if (hit) {
-    return NextResponse.redirect(new URL(hit.to, request.url), hit.statusCode);
+    // `to`/`statusCode` are editor-authored (and the redirect importer can write
+    // them without passing Strapi's validators at all), so they are checked
+    // before becoming a `Location`:
+    //  - `safeRedirect` rejects `javascript:`/`data:` targets, so a redirect row
+    //    can never be a script sink.
+    //  - It also pins the status to one `NextResponse.redirect` accepts. The
+    //    schema allows 300–399, but 350 would throw a `RangeError` *inside
+    //    middleware* — which fails every request for that path, not just the
+    //    redirect. Falling back beats 500-ing.
+    // An unusable row falls through to normal routing rather than erroring.
+    const safe = safeRedirect(hit.to, hit.statusCode);
+    if (safe) {
+      return NextResponse.redirect(new URL(safe.to, request.url), safe.statusCode);
+    }
+    console.warn(`[redirects] ignoring unsafe redirect target for ${request.nextUrl.pathname}`);
   }
   return intlMiddleware(request);
 }

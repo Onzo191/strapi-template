@@ -1,0 +1,24 @@
+{
+  "name": "@vng/sso",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Admin SSO via OIDC (Authorization Code + PKCE) with MFA assurance — Req §8, §0 A3.",
+  "strapi": {
+    "name": "sso",
+    "kind": "plugin",
+    "displayName": "SSO",
+    "description": "OIDC single sign-on and MFA enforcement for the admin panel."
+  },
+  "_comment_exports": [
+    "`./strapi-server` MUST point at ./strapi-server.js — a hand-written CommonJS",
+    "bridge in this directory (see that file for the full reasoning). Strapi joins",
+    "this target onto path.resolve(dirs.app.root, resolve), and the app root is the",
+    "PROJECT root, whose src/ tree is TypeScript. A .ts target makes the entrypoint",
+    "path not-exist, and Strapi's loader skips a missing entrypoint SILENTLY — the",
+    "plugin never loads and nothing at all is logged."
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-server": "./strapi-server.js"
+  }
+}

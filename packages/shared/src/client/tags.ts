@@ -79,7 +79,14 @@ export interface RevalidatePayload {
  * `category:{slug}`/`tag:{slug}` tags are only meaningful when a category or
  * tag entity itself changes. We still emit them for an article when the CMS
  * enriched the payload with the relation slugs, to match the §5.2 table.
+ *
+ * `tagSlugs` is capped (P7): it is the only unbounded field in the payload, and
+ * each entry becomes a separate `revalidateTag` call plus a Redis round-trip in
+ * the cache handler. A payload claiming 100k tags would turn one authenticated
+ * webhook into a self-inflicted Redis flood. Real articles carry a handful.
  */
+const MAX_TAG_SLUGS = 64;
+
 export function tagsForEntry(p: RevalidatePayload): string[] {
   const tags = new Set<string>();
 
@@ -88,7 +95,10 @@ export function tagsForEntry(p: RevalidatePayload): string[] {
       if (p.documentId) tags.add(articleTag(p.documentId));
       tags.add(LIST_ARTICLES_TAG);
       if (p.categorySlug) tags.add(categoryTag(p.categorySlug));
-      for (const t of p.tagSlugs ?? []) tags.add(tagTag(t));
+      const slugs = Array.isArray(p.tagSlugs) ? p.tagSlugs.slice(0, MAX_TAG_SLUGS) : [];
+      for (const t of slugs) {
+        if (typeof t === "string" && t.length > 0) tags.add(tagTag(t));
+      }
       break;
     }
     case "landing-page": {

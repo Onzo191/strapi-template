@@ -18,7 +18,9 @@
     "test": "turbo run test",
     "e2e": "turbo run e2e",
     "lighthouse": "turbo run lighthouse",
-    "prepare": "lefthook install || true"
+    "prepare": "lefthook install || true",
+    "skills:lock": "node scripts/skills-lock.mjs",
+    "skills:check": "node scripts/skills-lock.mjs --check"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",

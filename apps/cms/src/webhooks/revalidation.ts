@@ -17,9 +17,13 @@
  */
 import { createHmac } from "node:crypto";
 import type { Core } from "@strapi/strapi";
-import type { RevalidateModel, RevalidatePayload } from "@vng/shared";
-
-const SIGNATURE_HEADER = "x-vng-signature";
+import {
+  type RevalidateModel,
+  type RevalidatePayload,
+  SIGNATURE_HEADER,
+  signingPayload,
+  TIMESTAMP_HEADER,
+} from "@vng/shared";
 
 /** Content types whose changes must invalidate FE cache, mapped uid → model. */
 const WATCHED_MODELS: Record<string, RevalidateModel> = {
@@ -112,13 +116,25 @@ async function deliver(
   payload: RevalidatePayload,
 ): Promise<void> {
   const body = JSON.stringify(payload);
-  const signature = `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
+  // The timestamp is signed *with* the body (P7): a bare timestamp header the
+  // HMAC didn't cover could simply be rewritten by whoever replays the request,
+  // and each replay costs the FE a cluster-wide purge plus a regeneration storm.
+  // Stamped once per delivery, not per attempt, so a retry that lands 500 ms
+  // later still verifies against the same signature.
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signature = `sha256=${createHmac("sha256", secret)
+    .update(signingPayload(timestamp, body))
+    .digest("hex")}`;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "content-type": "application/json", [SIGNATURE_HEADER]: signature },
+        headers: {
+          "content-type": "application/json",
+          [SIGNATURE_HEADER]: signature,
+          [TIMESTAMP_HEADER]: timestamp,
+        },
         body,
       });
       if (res.ok) {

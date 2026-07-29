@@ -314,6 +314,169 @@ export async function seed(strapi: Core.Strapi): Promise<void> {
   await publish(strapi, "api::landing-page.landing-page", landing.documentId, "vi");
   await publish(strapi, "api::landing-page.landing-page", landing.documentId, "en");
 
+  // --- Navigation (header + footer; slug shared across locales) ------------
+  const navDefs = [
+    {
+      slug: "main-header",
+      vi: {
+        title: "Menu chính",
+        items: [
+          { label: "Trang chủ", url: "/" },
+          { label: "Tin tức", url: "/tin-tuc" },
+          {
+            label: "Về VNG",
+            url: "/ve-vng",
+            children: [
+              { label: "Giới thiệu", url: "/ve-vng/gioi-thieu" },
+              { label: "Lãnh đạo", url: "/ve-vng/lanh-dao" },
+            ],
+          },
+          { label: "Tuyển dụng", url: "/tuyen-dung" },
+        ],
+      },
+      en: {
+        title: "Main menu",
+        items: [
+          { label: "Home", url: "/" },
+          { label: "News", url: "/news" },
+          {
+            label: "About VNG",
+            url: "/about",
+            children: [
+              { label: "Overview", url: "/about/overview" },
+              { label: "Leadership", url: "/about/leadership" },
+            ],
+          },
+          { label: "Careers", url: "/careers" },
+        ],
+      },
+    },
+    {
+      slug: "main-footer",
+      vi: {
+        title: "Chân trang",
+        items: [
+          { label: "Điều khoản", url: "/dieu-khoan" },
+          { label: "Bảo mật", url: "/bao-mat" },
+          { label: "Liên hệ", url: "/lien-he" },
+        ],
+      },
+      en: {
+        title: "Footer",
+        items: [
+          { label: "Terms", url: "/terms" },
+          { label: "Privacy", url: "/privacy" },
+          { label: "Contact", url: "/contact" },
+        ],
+      },
+    },
+  ];
+  for (const n of navDefs) {
+    const doc = await docs(strapi, "api::navigation.navigation").create({
+      data: { title: n.vi.title, slug: n.slug, items: n.vi.items },
+      locale: "vi",
+    });
+    await docs(strapi, "api::navigation.navigation").update({
+      documentId: doc.documentId,
+      locale: "en",
+      data: { title: n.en.title, slug: n.slug, items: n.en.items },
+    });
+    await publish(strapi, "api::navigation.navigation", doc.documentId, "vi");
+    await publish(strapi, "api::navigation.navigation", doc.documentId, "en");
+  }
+
+  // --- Global (single type, vi + en) ---------------------------------------
+  const orgSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "VNG Corporation",
+    url: "https://vng.com.vn",
+  };
+  await docs(strapi, "api::global.global").create({
+    data: {
+      siteName: "VNG",
+      siteDescription: "Nền tảng công nghệ hàng đầu Việt Nam.",
+      defaultSeo: {
+        metaTitle: "VNG Corporation",
+        metaDescription: "Nền tảng công nghệ hàng đầu Việt Nam.",
+        noindex: false,
+      },
+      socialLinks: [
+        { label: "Facebook", href: "https://facebook.com/VNGCorp", variant: "link" },
+        { label: "LinkedIn", href: "https://linkedin.com/company/vng", variant: "link" },
+      ],
+      organizationSchema: orgSchema,
+    },
+    locale: "vi",
+  });
+  const globalDoc = await docs(strapi, "api::global.global").findFirst({ locale: "vi" });
+  if (globalDoc) {
+    await docs(strapi, "api::global.global").update({
+      documentId: globalDoc.documentId,
+      locale: "en",
+      data: {
+        siteName: "VNG",
+        siteDescription: "Vietnam's leading technology platform.",
+        defaultSeo: {
+          metaTitle: "VNG Corporation",
+          metaDescription: "Vietnam's leading technology platform.",
+          noindex: false,
+        },
+        organizationSchema: orgSchema,
+      },
+    });
+  }
+
+  strapi.log.info("[seed] demo content seeded ✓");
+}
+
+/**
+ * A couple of rows from the legacy-404 map (Req §6, §6.3), so the 301 resolver in
+ * `apps/web/proxy.ts` has something to resolve and `qa/e2e/redirects.spec.ts` has
+ * something to assert against. The production table is imported from CSV — see
+ * `apps/cms/scripts/import-redirects.js`.
+ *
+ * Deliberately **not** inside `seed()`: that function short-circuits as soon as any
+ * article exists, so anything added to it is only ever created on a virgin database.
+ * Redirects are operational data with their own lifecycle, so they get their own
+ * idempotent upsert — keyed on `from`, which is unique — and a row an operator edited
+ * or deleted on purpose is never recreated or clobbered.
+ */
+const DEMO_REDIRECTS = [
+  { from: "/tin-tuc-cong-nghe", to: "/vi/tin-tuc", permanent: true, statusCode: 301 },
+  { from: "/gioi-thieu", to: "/vi/about", permanent: true, statusCode: 301 },
+  { from: "/news", to: "/en/tin-tuc", permanent: false, statusCode: 302 },
+];
+
+export async function seedDemoRedirects(strapi: Core.Strapi): Promise<void> {
+  let created = 0;
+  for (const row of DEMO_REDIRECTS) {
+    const existing = await strapi.db
+      .query("api::redirect.redirect")
+      .findOne({ where: { from: row.from } });
+    if (existing) continue;
+    await docs(strapi, "api::redirect.redirect").create({ data: row });
+    created += 1;
+  }
+  if (created > 0) strapi.log.info(`[seed] created ${created} demo redirect(s)`);
+}
+
+/**
+ * Static-shell pages (§5.1) — currently just `about`, which
+ * `app/[locale]/(marketing)/about/page.tsx` fetches by slug. Without it that route
+ * 404s, which is why this is not inside `seed()`: that function short-circuits as soon
+ * as any article exists, so on a database that has articles but somehow lost its pages
+ * the route would stay broken forever with no way to recover short of wiping content.
+ *
+ * Idempotent on the `about` slug, so an operator who edited or deleted the page on
+ * purpose is never clobbered.
+ */
+export async function seedStaticPages(strapi: Core.Strapi): Promise<void> {
+  const existing = await strapi.db.query("api::page.page").findOne({ where: { slug: "about" } });
+  if (existing) return;
+
+  strapi.log.info("[seed] creating the `about` static-shell page…");
+
   // --- About page (static shell, vi + en, published) ------------------------
   // Exercises the block types `home`'s landing pages don't (§P5 design-system
   // restyle needs real content to render against): leadership-grid, timeline,
@@ -593,118 +756,5 @@ export async function seed(strapi: Core.Strapi): Promise<void> {
   await publish(strapi, "api::page.page", aboutPage.documentId, "vi");
   await publish(strapi, "api::page.page", aboutPage.documentId, "en");
 
-  // --- Navigation (header + footer; slug shared across locales) ------------
-  const navDefs = [
-    {
-      slug: "main-header",
-      vi: {
-        title: "Menu chính",
-        items: [
-          { label: "Trang chủ", url: "/" },
-          { label: "Tin tức", url: "/tin-tuc" },
-          {
-            label: "Về VNG",
-            url: "/ve-vng",
-            children: [
-              { label: "Giới thiệu", url: "/ve-vng/gioi-thieu" },
-              { label: "Lãnh đạo", url: "/ve-vng/lanh-dao" },
-            ],
-          },
-          { label: "Tuyển dụng", url: "/tuyen-dung" },
-        ],
-      },
-      en: {
-        title: "Main menu",
-        items: [
-          { label: "Home", url: "/" },
-          { label: "News", url: "/news" },
-          {
-            label: "About VNG",
-            url: "/about",
-            children: [
-              { label: "Overview", url: "/about/overview" },
-              { label: "Leadership", url: "/about/leadership" },
-            ],
-          },
-          { label: "Careers", url: "/careers" },
-        ],
-      },
-    },
-    {
-      slug: "main-footer",
-      vi: {
-        title: "Chân trang",
-        items: [
-          { label: "Điều khoản", url: "/dieu-khoan" },
-          { label: "Bảo mật", url: "/bao-mat" },
-          { label: "Liên hệ", url: "/lien-he" },
-        ],
-      },
-      en: {
-        title: "Footer",
-        items: [
-          { label: "Terms", url: "/terms" },
-          { label: "Privacy", url: "/privacy" },
-          { label: "Contact", url: "/contact" },
-        ],
-      },
-    },
-  ];
-  for (const n of navDefs) {
-    const doc = await docs(strapi, "api::navigation.navigation").create({
-      data: { title: n.vi.title, slug: n.slug, items: n.vi.items },
-      locale: "vi",
-    });
-    await docs(strapi, "api::navigation.navigation").update({
-      documentId: doc.documentId,
-      locale: "en",
-      data: { title: n.en.title, slug: n.slug, items: n.en.items },
-    });
-    await publish(strapi, "api::navigation.navigation", doc.documentId, "vi");
-    await publish(strapi, "api::navigation.navigation", doc.documentId, "en");
-  }
-
-  // --- Global (single type, vi + en) ---------------------------------------
-  const orgSchema = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "VNG Corporation",
-    url: "https://vng.com.vn",
-  };
-  await docs(strapi, "api::global.global").create({
-    data: {
-      siteName: "VNG",
-      siteDescription: "Nền tảng công nghệ hàng đầu Việt Nam.",
-      defaultSeo: {
-        metaTitle: "VNG Corporation",
-        metaDescription: "Nền tảng công nghệ hàng đầu Việt Nam.",
-        noindex: false,
-      },
-      socialLinks: [
-        { label: "Facebook", href: "https://facebook.com/VNGCorp", variant: "link" },
-        { label: "LinkedIn", href: "https://linkedin.com/company/vng", variant: "link" },
-      ],
-      organizationSchema: orgSchema,
-    },
-    locale: "vi",
-  });
-  const globalDoc = await docs(strapi, "api::global.global").findFirst({ locale: "vi" });
-  if (globalDoc) {
-    await docs(strapi, "api::global.global").update({
-      documentId: globalDoc.documentId,
-      locale: "en",
-      data: {
-        siteName: "VNG",
-        siteDescription: "Vietnam's leading technology platform.",
-        defaultSeo: {
-          metaTitle: "VNG Corporation",
-          metaDescription: "Vietnam's leading technology platform.",
-          noindex: false,
-        },
-        organizationSchema: orgSchema,
-      },
-    });
-  }
-
-  strapi.log.info("[seed] demo content seeded ✓");
+  strapi.log.info("[seed] `about` page created ✓");
 }

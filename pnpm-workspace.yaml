@@ -2,6 +2,9 @@ packages:
   - "apps/*"
   - "packages/*"
   - "qa"
+  # Docusaurus handbook (ADRs + reference). Not part of either Docker image —
+  # .dockerignore excludes docs/, so it adds nothing to the runtime builds.
+  - "docs"
 
 # pnpm 10 blocks dependency build/postinstall scripts by default.
 # These packages must be allowed to run their install scripts, otherwise

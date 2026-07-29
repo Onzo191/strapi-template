@@ -2,6 +2,11 @@
   "extends": "@vng/config-tsconfig/base.json",
   "compilerOptions": {
     "types": ["node"],
+    // Playwright specs legitimately run code *inside the browser* via
+    // `page.evaluate` / `locator.evaluateAll`, so those callbacks need the DOM
+    // lib to type `document`, `Element` and friends. The Node types stay for the
+    // test-runner half of each file.
+    "lib": ["ES2023", "DOM"],
     "noEmit": true
   },
   "include": ["**/*.ts"]
