@@ -24,8 +24,8 @@
  *    this cookie, which is what makes a server-side SSO redirect land the user in
  *    an authenticated panel with no bespoke handoff page.
  */
-import { randomUUID } from "node:crypto";
 import type { Core } from "@strapi/strapi";
+import { uuidv7 } from "@vng/shared";
 
 const REFRESH_COOKIE_NAME = "strapi_admin_refresh";
 const DEFAULT_ACCESS_COOKIE_NAME = "jwtToken";
@@ -84,7 +84,15 @@ export async function mintAdminSession(
   }
 
   const manager = sessionManager("admin");
-  const deviceId = randomUUID();
+  // UUIDv7, so the device id embeds when the session was established — useful
+  // when reconciling a refresh-token row against the audit log.
+  //
+  // It carries 62 random bits rather than v4's 122, which is fine *here* because
+  // deviceId is not a credential: Strapi's session manager keeps the bearer
+  // secret in its own `sessionId` (the value signed into the JWT), and stores
+  // deviceId only to group and invalidate a device's sessions. Do not reuse this
+  // for anything that is presented as proof of identity.
+  const deviceId = uuidv7();
 
   const { token: refreshToken } = await manager.generateRefreshToken(String(userId), deviceId, {
     type: "session",

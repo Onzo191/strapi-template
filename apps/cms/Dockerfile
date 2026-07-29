@@ -66,9 +66,13 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 # runtime
 # -----------------------------------------------------------------------------
 FROM base AS runtime
+# TZ=UTC: all time values are stored at UTC+0 (src/bootstrap/timestamps.ts).
+# config/database.ts sets this in-process too, for the `pnpm dev` path that has no
+# container env — here it means the process is never briefly in another zone.
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
-    PORT=1337
+    PORT=1337 \
+    TZ=UTC
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl ca-certificates \

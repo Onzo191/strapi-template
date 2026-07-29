@@ -13,6 +13,8 @@ export type SharedPackage = typeof SHARED_PACKAGE;
 
 // Typed API client (P2 §4.4) — cache-tagged Strapi REST access for apps/web.
 export * from "./client";
+// Identifier generation — UUIDv7, the house id format (time-ordered, self-dating).
+export * from "./ids";
 // Smart-population strategy (§4.4) — single source of truth.
 export {
   ARTICLE_CARD_FIELDS,

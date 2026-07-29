@@ -11,6 +11,26 @@ import type { Core } from "@strapi/strapi";
 import { ROLE_SEEDS } from "./constants/rbac";
 
 export default async ({ strapi }: { strapi: Core.Strapi }) => {
+  // Let Strapi create its OWN default roles first — above all `strapi-super-admin`.
+  //
+  // This is not defensive tidiness, it is load-bearing. Strapi provisions its
+  // defaults with `createRolesIfNoneExist()`, a *none exist* guard, and it runs in
+  // the admin **provider** bootstrap, which Strapi sequences AFTER every plugin
+  // bootstrap (Strapi.js: runPluginsLifecycles(BOOTSTRAP) → providers → user
+  // lifecycles). So on an empty database the five roles below would land first, the
+  // guard would see roles already present, and Strapi would skip its defaults
+  // entirely — leaving an installation with **no super-admin role at all**. The
+  // symptom is remote from the cause: "Your application doesn't have a super admin
+  // role", an admin panel stuck on "create first administrator", and no way to
+  // grant anyone full access.
+  //
+  // Calling it here is safe and idempotent: it is the same function Strapi is about
+  // to call, and once the defaults exist Strapi's own call becomes the no-op instead.
+  const roleService = strapi.service("admin::role") as {
+    createRolesIfNoneExist: () => Promise<unknown>;
+  };
+  await roleService.createRolesIfNoneExist();
+
   for (const seed of ROLE_SEEDS) {
     const existing = await strapi.db.query("admin::role").findOne({ where: { code: seed.code } });
     if (existing) continue;

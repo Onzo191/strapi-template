@@ -1,8 +1,11 @@
 import type { Core } from "@strapi/strapi";
+import { ensureBootstrapAdmin } from "./bootstrap/admin-user";
 import { assertLocalPluginsLoaded } from "./bootstrap/assert-plugins";
+import { registerUuidV7DocumentIds } from "./bootstrap/document-ids";
 import { ensureLocales } from "./bootstrap/locales";
 import { ensureContentApiAccess } from "./bootstrap/permissions";
 import { seed, seedDemoRedirects, seedStaticPages } from "./bootstrap/seed";
+import { registerTimestampTimezoneConvergence } from "./bootstrap/timestamps";
 import { registerDraftGuard } from "./middlewares/draft-guard";
 import { setupUploadVirusScan } from "./upload/virus-scan";
 import { registerRevalidationWebhook } from "./webhooks/revalidation";
@@ -24,10 +27,18 @@ export default {
    * `strapi.plugin('upload').provider`, which the upload plugin's own
    * `register()` creates. The relative order of plugin and application register
    * hooks is not a contract to lean on, so it runs in `bootstrap()` instead.
+   *
+   * The two identifier/timestamp steps below also only *register* here; the work
+   * runs on Strapi's own `content-types.beforeSync`/`afterSync` hooks, which fire
+   * inside Strapi's `bootstrap()` — after the DB metadata and schema exist, but
+   * before any plugin bootstrap writes its first row. Doing them in our
+   * `bootstrap()` would be too late for those rows.
    */
   register({ strapi }: { strapi: Core.Strapi }) {
     registerRevalidationWebhook(strapi);
     registerDraftGuard(strapi);
+    registerUuidV7DocumentIds(strapi);
+    registerTimestampTimezoneConvergence(strapi);
   },
 
   /**
@@ -48,6 +59,9 @@ export default {
 
     await ensureLocales(strapi);
     await ensureContentApiAccess(strapi);
+    // Before the seed: a fresh database otherwise comes up with content but no way
+    // to log in and look at it.
+    await ensureBootstrapAdmin(strapi);
     setupUploadVirusScan(strapi);
 
     if (process.env.SEED === "true") {

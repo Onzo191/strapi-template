@@ -63,6 +63,35 @@ matching React component and registry entry on the web side —
 `.claude/skills/add-page-builder-block` covers both halves. A block that exists in
 Strapi but not in the FE registry renders as nothing, with no error.
 
+**Identifiers are UUIDv7.** `src/bootstrap/document-ids.ts` swaps Strapi's cuid2
+`documentId` generator for `uuidv7()` from `@vng/shared`, so every `documentId` is
+time-ordered and self-dating (`uuidV7Timestamp` recovers the creation time). It
+works by replacing the `default` function on the loaded DB metadata — there is no
+config hook — and throws on boot if Strapi's shape changes rather than silently
+reverting to cuid2. Old cuid2 ids are **not** migrated: `document_id` is an opaque
+`varchar` and both formats coexist fine. The numeric `id` primary key stays an
+`increments` — Strapi hardwires that, and every join-table FK is an integer.
+
+**All time values are stored at UTC+0, in `timestamptz` columns.** Three pieces,
+and all three are load-bearing:
+
+| Where | What |
+|---|---|
+| `config/database.ts` | `process.env.TZ = "UTC"` + `SET TIME ZONE 'UTC'` on every pooled connection |
+| `src/bootstrap/timestamps.ts` | converts Strapi's `timestamp WITHOUT time zone` columns to `timestamptz` on every boot |
+| `docker-compose.yml`, `Dockerfile` | `TZ=UTC` so the process never *starts* in another zone |
+
+Strapi hard-codes `useTz: false`, so left alone every column is naive and stores
+the *writing process's* wall clock — which differs between `docker compose up`
+(UTC) and `pnpm --filter @vng/cms dev` on a laptop (+07). The conversion runs on
+`content-types.afterSync`, so a content type added today is converted on the same
+boot that creates its columns, and it re-asserts the invariant every boot instead
+of trusting it. Read the header comment in `timestamps.ts` before touching any of
+this — in particular *why* Strapi's schema sync does not revert the columns.
+
+`date` and `time` attributes are exempt by nature: they carry no offset. Don't
+reach for them when you mean an instant — use `datetime`.
+
 **Custom code vs plugin** (§4.6):
 
 | Situation | Do |
@@ -129,6 +158,32 @@ three options, in order of preference:
   formula prefixes — editor-authored rejection reasons end up in that file.
 
 ## Local development
+
+**Configuration comes from `apps/cms/.env`** (then `.env.local`), which
+`docker-compose.yml` loads with `env_file`. Compose contributes only what cannot be
+right outside its network — `DATABASE_HOST=postgres`, container-internal ports,
+`WEB_REVALIDATE_URL=http://web:3000/…` — plus `TZ=UTC`, `ADMIN_COOKIE_SECURE=false`
+and `TRUSTED_PROXY_HOPS`. No secret is in the compose file. Two values **must** match
+`apps/web/.env.local` or the stack looks healthy and misbehaves:
+`STRAPI_READONLY_API_TOKEN` = web's `STRAPI_API_TOKEN` (else every page renders
+empty), and `REVALIDATE_SECRET` (else published content never appears).
+
+Because `environment:` wins over `env_file`, adding a key to compose silently
+overrides everyone's `.env`. Put new configuration in `.env.example` instead, and
+keep compose for topology.
+
+**The first admin account** is provisioned by `src/bootstrap/admin-user.ts` from
+`BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD`, so a reset database comes up
+usable instead of parked on the "create first administrator" form. It is
+create-only: an existing account with that e-mail is never touched, so the variable
+cannot be used to reset a live password.
+
+To reset content, remove **only** the Postgres volume — `docker compose down -v`
+would also delete `cmsuploads`:
+
+```bash
+docker compose down && docker volume rm vng-platform_pgdata && docker compose up -d
+```
 
 ```bash
 docker compose up                              # postgres + cms + web

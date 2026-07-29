@@ -41,6 +41,23 @@ async function publish(strapi: Core.Strapi, uid: string, documentId: string, loc
   await docs(strapi, uid).publish({ documentId, locale });
 }
 
+/**
+ * Reference a related document by its `documentId`, explicitly.
+ *
+ * Strapi also accepts a bare string as a relation shorthand, but it classifies
+ * that string with `parseInt(value, 10)` — numeric ⇒ an entity id, otherwise ⇒ a
+ * documentId (`@strapi/core` document-service/transform/relations/utils/map-relation.js).
+ * Our `documentId`s are UUIDv7 (see `bootstrap/document-ids.ts`) and a UUIDv7
+ * always begins with decimal digits, so the shorthand is read as an entity id,
+ * never resolved, and the create fails with a bare `Invalid relations`.
+ *
+ * The object form skips the heuristic entirely. Prefer it for every relation here,
+ * not just the ones that happen to break.
+ */
+function rel(documentId: string) {
+  return { documentId };
+}
+
 export async function seed(strapi: Core.Strapi): Promise<void> {
   const existing = await docs(strapi, "api::article.article").findMany({ limit: 1 });
   if (existing.length > 0) {
@@ -170,9 +187,9 @@ export async function seed(strapi: Core.Strapi): Promise<void> {
         excerpt: a.vi.excerpt,
         featured: a.featured,
         body: richText([a.vi.excerpt, "Nội dung chi tiết sẽ được cập nhật."], a.vi.heading),
-        category: categories[a.category],
-        tags: a.tags.map((s) => tags[s]),
-        author: a.author,
+        category: rel(categories[a.category]),
+        tags: a.tags.map((s) => rel(tags[s])),
+        author: rel(a.author),
         seo: {
           metaTitle: a.vi.title,
           metaDescription: a.vi.excerpt,
@@ -191,9 +208,9 @@ export async function seed(strapi: Core.Strapi): Promise<void> {
         excerpt: a.en.excerpt,
         featured: a.featured,
         body: richText([a.en.excerpt, "Full content coming soon."], a.en.heading),
-        category: categories[a.category],
-        tags: a.tags.map((s) => tags[s]),
-        author: a.author,
+        category: rel(categories[a.category]),
+        tags: a.tags.map((s) => rel(tags[s])),
+        author: rel(a.author),
         seo: {
           metaTitle: a.en.title,
           metaDescription: a.en.excerpt,

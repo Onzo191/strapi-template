@@ -13,7 +13,21 @@
 # publish webhook never invalidated. If you scale this stack out, read ADR-008
 # first — the cache and the CMS rate limiter both assume a single instance.
 #
-# Secrets here are DEV-ONLY placeholders. Never reuse in staging/prod.
+# CONFIGURATION LIVES IN YOUR ENV FILES, NOT HERE. Each app service reads
+# `apps/<app>/.env` then `apps/<app>/.env.local`; this file contributes only the
+# values that cannot be right outside the compose network (service DNS names,
+# container-internal ports) plus the two plain-http concessions. No secret appears
+# in this file, so it stays safe to commit and there is one place — yours — where a
+# credential is defined.
+#
+#   cp apps/cms/.env.example  apps/cms/.env
+#   cp apps/web/.env.example  apps/web/.env.local
+#
+# Both env files are optional to compose, so `docker compose config` works on a
+# fresh clone; the CMS will refuse to boot without APP_KEYS, which is the intended
+# signal that you skipped the copy above. Postgres' own credentials are in
+# docker-compose.infra.yml and must match DATABASE_* in apps/cms/.env (both default
+# to vng/vng/vng).
 name: vng-platform
 
 include:
@@ -25,68 +39,48 @@ services:
       context: .
       dockerfile: apps/cms/Dockerfile
     restart: unless-stopped
+    # Real configuration and secrets come from YOUR env files, not from this file.
+    # `.env` is Strapi's convention, `.env.local` is the personal override; later
+    # files win, and both are optional so `docker compose config` still works on a
+    # fresh clone. Start from the template:
+    #
+    #   cp apps/cms/.env.example apps/cms/.env
+    #
+    # Nothing below is a secret: `environment:` holds only the values that are
+    # *wrong by construction* outside this network — container-internal ports and
+    # service DNS names — plus the two local-http concessions. Compose applies
+    # `environment:` after `env_file`, so anything listed here overrides your file;
+    # that is why no credential appears in it.
+    env_file:
+      - path: apps/cms/.env
+        required: false
+      - path: apps/cms/.env.local
+        required: false
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
+      # Container-internal port and DB address. Your .env points at localhost:5432
+      # (the published port) so `strapi develop` on the host works; on this network
+      # the CMS talks to the container directly.
       PORT: 1337
-      APP_KEYS: devKey1,devKey2,devKey3,devKey4
-      API_TOKEN_SALT: dev-api-token-salt
-      ADMIN_JWT_SECRET: dev-admin-jwt-secret
-      TRANSFER_TOKEN_SALT: dev-transfer-token-salt
-      JWT_SECRET: dev-jwt-secret
-      ENCRYPTION_KEY: dev-encryption-key-change-me
-      DATABASE_CLIENT: postgres
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
-      DATABASE_NAME: vng
-      DATABASE_USERNAME: vng
-      DATABASE_PASSWORD: vng
-      DATABASE_SSL: "false"
-      # Demo content (P1 seed) on first boot of an empty DB — see
-      # apps/cms/src/bootstrap/seed.ts. Safe to leave on: it no-ops once any
-      # article exists.
-      SEED: "true"
-      # P3 revalidation webhook (§5.3). The CMS signs with REVALIDATE_SECRET and
-      # POSTs to the web app, which calls revalidateTag on its own ISR cache.
+      # All time values are stored at UTC+0 in timestamptz columns. config/database.ts
+      # sets this in-process too (for the `pnpm dev` path, which has no container
+      # env), but pinning it here means the process never briefly starts in another
+      # zone. See apps/cms/src/bootstrap/timestamps.ts.
+      TZ: UTC
+      # Service DNS, not localhost: these are CMS→web calls inside the network.
       WEB_REVALIDATE_URL: http://web:3000/api/revalidate
-      REVALIDATE_SECRET: dev-revalidate-secret-change-me
-      # ── P7 hardening (§9) ────────────────────────────────────────────────
-      # The Content API is token-authenticated here, exactly as in prod: this
-      # token is provisioned on boot and `web` below reads with it. Running the
-      # authenticated path locally is the point — an auth model that is only
-      # exercised in production is an auth model nobody has tested.
-      STRAPI_READONLY_API_TOKEN: dev-readonly-token-0123456789abcdef0123456789
-      CMS_PUBLIC_READ: "false"
-      # Rate limiting is in-process (src/middlewares/rate-limit.ts). Nothing to
-      # configure for a single instance; see ADR-008 before scaling out.
-      # Reached directly on the compose network, so XFF carries no trusted hop;
-      # keying on ctx.request.ip is correct here.
-      TRUSTED_PROXY_HOPS: "1"
-      # CORS + admin-CSP allow-list.
+      WEB_PREVIEW_URL: http://localhost:3000
+      # CORS + admin-CSP allow-list — the browser reaches web on the published port.
       WEB_ALLOWED_ORIGINS: http://localhost:3000
       # Admin cookies must not be Secure over plain http, or login cannot
       # complete — NODE_ENV=production above would otherwise make them Secure.
       ADMIN_COOKIE_SECURE: "false"
-      # No outbound calls from a local stack.
-      STRAPI_TELEMETRY_DISABLED: "true"
-      FLAG_NPS: "false"
-      FLAG_PROMOTE_EE: "false"
-      # Inline upload scanning (Req §2, §0 A6). OFF by default locally: the
-      # official clamav image is amd64-only, so on an Apple Silicon machine it
-      # runs under emulation and takes minutes to load ~250 MB of signatures —
-      # too slow to make every `docker compose up` wait on it. To exercise it:
-      #
-      #   CLAMAV_HOST=clamav docker compose --profile scan up
-      #
-      # In production clamd runs alongside the CMS and this is always set (see
-      # docs/adr/006-security-hardening.md).
-      CLAMAV_HOST: ${CLAMAV_HOST:-}
-      CLAMAV_PORT: "3310"
-      # Fail closed, as in prod: an unreachable scanner rejects the upload. Only
-      # applies when CLAMAV_HOST is set at all.
-      UPLOAD_SCAN_FAIL_OPEN: "false"
-      # SSO is off locally (no IdP). See apps/cms/.env.example to wire one.
-      OIDC_ENFORCE: "false"
+      # Reached directly on the compose network, so XFF carries no trusted hop;
+      # keying on ctx.request.ip is correct here.
+      TRUSTED_PROXY_HOPS: "1"
     ports:
       - "1337:1337"
     volumes:
@@ -101,19 +95,26 @@ services:
       dockerfile: apps/web/Dockerfile
     image: vng-web:local
     restart: unless-stopped
+    # Same arrangement as `cms` above: your env files carry the real values.
+    # `.env.local` is Next's convention and takes precedence over `.env`.
+    #
+    #   cp apps/web/.env.example apps/web/.env.local
+    #
+    # Two secrets here must MATCH the CMS side or the stack looks healthy and
+    # misbehaves: STRAPI_API_TOKEN = the CMS's STRAPI_READONLY_API_TOKEN (otherwise
+    # every page renders empty), and REVALIDATE_SECRET (otherwise published content
+    # never appears without a rebuild).
+    env_file:
+      - path: apps/web/.env
+        required: false
+      - path: apps/web/.env.local
+        required: false
     environment:
       NODE_ENV: production
       PORT: 3000
-      # Server-side calls to Strapi go over the compose network.
+      # Service DNS, not localhost: server-side RSC fetches go over this network,
+      # while your .env.local points at the published port for `next dev`.
       STRAPI_URL: http://cms:1337
-      # Must match the CMS's REVALIDATE_SECRET to accept signed webhooks.
-      REVALIDATE_SECRET: dev-revalidate-secret-change-me
-      # P7 (§9): the Content API is token-authenticated. Same value the CMS
-      # provisions as STRAPI_READONLY_API_TOKEN.
-      STRAPI_API_TOKEN: dev-readonly-token-0123456789abcdef0123456789
-      # No embeds allow-listed locally ⇒ CSP `frame-src 'none'`. Add origins here
-      # to test the `embed` block against a real IR/BU property.
-      EMBED_ALLOWED_ORIGINS: ""
     ports:
       - "3000:3000"
     depends_on:
