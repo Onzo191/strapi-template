@@ -52,6 +52,9 @@ const PUBLIC_READ_ACTIONS = [
 /** Name of the API token the web app authenticates with. */
 const READONLY_TOKEN_NAME = "web-readonly";
 
+/** Name of the preview API token the web app authenticates with. */
+const PREVIEW_TOKEN_NAME = "web-preview";
+
 function publicReadEnabled(strapi: Core.Strapi): boolean {
   const requested = process.env.CMS_PUBLIC_READ === "true";
   if (!requested) return false;
@@ -197,11 +200,65 @@ async function ensureReadOnlyApiToken(strapi: Core.Strapi): Promise<void> {
   strapi.log.info(`[bootstrap] provisioned read-only API token "${READONLY_TOKEN_NAME}"`);
 }
 
+async function ensurePreviewApiToken(strapi: Core.Strapi): Promise<void> {
+  const accessKey = process.env.STRAPI_PREVIEW_TOKEN;
+  if (!accessKey) return;
+
+  if (accessKey.length < 32) {
+    strapi.log.error(
+      "[bootstrap] STRAPI_PREVIEW_TOKEN is shorter than 32 characters — refusing to " +
+        "provision it. Generate one with: openssl rand -hex 32",
+    );
+    return;
+  }
+
+  const service = strapi.service("admin::api-token") as {
+    hash: (key: string) => string;
+  };
+  const accessKeyHash = service.hash(accessKey);
+
+  const existing = await strapi.db
+    .query("admin::api-token")
+    .findOne({ where: { name: PREVIEW_TOKEN_NAME } });
+
+  if (existing) {
+    if (existing.accessKey !== accessKeyHash || existing.type !== "full-access") {
+      await strapi.db.query("admin::api-token").update({
+        where: { id: existing.id },
+        data: {
+          accessKey: accessKeyHash,
+          type: "full-access",
+          kind: "content-api",
+          lifespan: null,
+          expiresAt: null,
+        },
+      });
+      strapi.log.info(`[bootstrap] re-keyed preview API token "${PREVIEW_TOKEN_NAME}"`);
+    }
+    return;
+  }
+
+  await strapi.db.query("admin::api-token").create({
+    data: {
+      name: PREVIEW_TOKEN_NAME,
+      description:
+        "Full-access Preview API token used by apps/web for draft rendering (provisioned from env).",
+      type: "full-access",
+      kind: "content-api",
+      accessKey: accessKeyHash,
+      lifespan: null,
+      expiresAt: null,
+    },
+  });
+  strapi.log.info(`[bootstrap] provisioned preview API token "${PREVIEW_TOKEN_NAME}"`);
+}
+
 /**
  * Apply the configured Content-API access model. Called from `bootstrap()`.
  */
 export async function ensureContentApiAccess(strapi: Core.Strapi): Promise<void> {
   await ensureReadOnlyApiToken(strapi);
+  await ensurePreviewApiToken(strapi);
 
   if (publicReadEnabled(strapi)) {
     await grantPublicRead(strapi);
