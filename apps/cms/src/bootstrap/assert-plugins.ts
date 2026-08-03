@@ -42,6 +42,14 @@ const REQUIRED_LOCAL_PLUGINS: Array<{ name: string; provides: string }> = [
     name: "sso",
     provides: "admin SSO via OIDC and MFA enforcement (Req §8)",
   },
+  {
+    // Worse than a missing feature if it silently skips: without the tenant
+    // plugin there is no RBAC condition and no scope guard, so every admin user
+    // can read and edit every tenant's content — while the admin panel still
+    // renders the tenant menu as though scoping were in force.
+    name: "tenant",
+    provides: "multi-tenant site scoping and user↔site assignment",
+  },
 ];
 
 /**

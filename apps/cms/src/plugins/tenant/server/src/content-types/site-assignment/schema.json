@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tenant_site_assignments",
+  "info": {
+    "singularName": "site-assignment",
+    "pluralName": "site-assignments",
+    "displayName": "Site Assignment",
+    "description": "Which admin user may work on which site. Plugin-owned table; never edited as content."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": { "visible": false },
+    "content-type-builder": { "visible": false }
+  },
+  "attributes": {
+    "adminUserId": { "type": "integer", "required": true },
+    "siteKey": { "type": "string", "required": true },
+    "siteDocumentId": { "type": "string", "required": true },
+    "isActiveSite": { "type": "boolean", "default": false }
+  }
+}

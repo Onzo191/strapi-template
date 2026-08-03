@@ -1,0 +1,40 @@
+{
+  "name": "@vng/tenant",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Multi-tenancy: site scoping, user↔site assignment and the super-admin tenant console.",
+  "strapi": {
+    "name": "tenant",
+    "kind": "plugin",
+    "displayName": "Tenant",
+    "description": "Multi-site content scoping and per-user site assignment."
+  },
+  "_comment_exports": [
+    "`./strapi-server` MUST point at ./strapi-server.js — a hand-written CommonJS",
+    "bridge in this directory (see that file for the full reasoning). Strapi joins",
+    "this target onto path.resolve(dirs.app.root, resolve), and the app root is the",
+    "PROJECT root, whose src/ tree is TypeScript. A .ts target makes the entrypoint",
+    "path not-exist, and Strapi's loader skips a missing entrypoint SILENTLY — the",
+    "plugin never loads and nothing at all is logged. For THIS plugin that failure",
+    "mode is worse than it was for `editorial`: with the server half missing, the",
+    "tenant condition is never registered, so every admin user sees every site's",
+    "content while the admin panel still renders the tenant menu. src/bootstrap/",
+    "assert-plugins.ts fails the boot instead.",
+    "",
+    "`./strapi-admin` stays on the .ts: it is consumed by the Vite admin build,",
+    "which reads TypeScript source. apps/cms/tsconfig.json deliberately EXCLUDES",
+    "src/plugins/*/admin and src/plugins/*/strapi-admin.ts from the server compile,",
+    "so there is no .js to point at — by design."
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-admin": {
+      "types": "./strapi-admin.ts",
+      "source": "./strapi-admin.ts",
+      "import": "./strapi-admin.ts",
+      "require": "./strapi-admin.ts",
+      "default": "./strapi-admin.ts"
+    },
+    "./strapi-server": "./strapi-server.js"
+  }
+}

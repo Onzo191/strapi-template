@@ -11,9 +11,29 @@
     "draftAndPublish": false
   },
   "attributes": {
-    "from": { "type": "string", "required": true, "unique": true },
-    "to": { "type": "string", "required": true },
-    "permanent": { "type": "boolean", "default": true },
+    "site": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::site.site",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "from": {
+      "type": "string",
+      "required": true
+    },
+    "to": {
+      "type": "string",
+      "required": true
+    },
+    "permanent": {
+      "type": "boolean",
+      "default": true
+    },
     "statusCode": {
       "type": "integer",
       "default": 301,

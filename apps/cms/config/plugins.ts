@@ -18,6 +18,13 @@ export default ({ env }) => ({
     resolve: "./src/plugins/editorial",
   },
 
+  // Local custom plugin: multi-tenancy — site scoping, user↔site assignment and
+  // the super-admin tenant console (docs/multi-tenancy-plan.md).
+  tenant: {
+    enabled: true,
+    resolve: "./src/plugins/tenant",
+  },
+
   // Local custom plugin (§9 P7 / Req §8): admin SSO via OIDC + MFA assurance.
   // Always loaded; it self-disables (and logs) when the OIDC_* env vars are
   // absent, so a missing IdP config is a visible warning rather than a silently

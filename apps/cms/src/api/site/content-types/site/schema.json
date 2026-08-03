@@ -1,0 +1,25 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sites",
+  "info": {
+    "singularName": "site",
+    "pluralName": "sites",
+    "displayName": "Site",
+    "description": "Một website (tenant) — gốc của mọi phân quyền multi-tenant. Các field phục vụ delivery (siteName, logo, defaultSeo…) sẽ dời từ `global` sang đây ở phase web; xem docs/multi-tenancy-plan.md §3.2."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "i18n": { "localized": false }
+  },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "key": { "type": "uid", "targetField": "name", "required": true },
+    "domains": { "type": "json", "default": [] },
+    "defaultLocale": { "type": "string", "required": true, "default": "vi" },
+    "locales": { "type": "json", "default": ["vi", "en"] },
+    "theme": { "type": "string" },
+    "isActive": { "type": "boolean", "default": true }
+  }
+}
